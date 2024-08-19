@@ -1,6 +1,7 @@
 from pyrogram import Client, filters
 from helper.database import db
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import MessageNotModified
 
 @Client.on_message(filters.command("setthumbnail") & filters.private)
 async def set_thumbnail(bot, msg):
@@ -133,7 +134,11 @@ async def handle_upload_settings_callback(bot, query):
     new_markup = InlineKeyboardMarkup(buttons)
     
     if current_text != new_text or current_markup != new_markup:
-        await query.message.edit_text(
-            new_text,
-            reply_markup=new_markup
-        )
+        try:
+            await query.message.edit_text(
+                new_text,
+                reply_markup=new_markup
+            )
+        except MessageNotModified:
+            # Handle the case where the message content hasn't changed
+            pass
