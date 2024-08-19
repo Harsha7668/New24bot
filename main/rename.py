@@ -5,7 +5,7 @@ from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
 from helper.database import db
 
-@Client.on_message(filters.command("rename") & filters.chat(GROUP))
+@Client.on_message(filters.command("rename") & filters.private)
 async def rename_file(bot, msg):
     if len(msg.command) < 2 or not msg.reply_to_message:
         return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
