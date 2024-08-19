@@ -73,3 +73,49 @@ async def set_metadata_command(client, msg):
     await db.save_metadata_titles(user_id, titles[0].strip(), titles[1].strip(), titles[2].strip())
     
     await msg.reply_text("Metadata titles set successfully ✅.")
+
+
+
+@Client.on_message(filters.command("uploadsettings") & filters.private)
+async def upload_settings(bot, msg):
+    user_id = msg.from_user.id
+    # Fetch current preference
+    user_upload_type = await db.get_user_upload_type(user_id)
+    
+    # Define buttons based on current preference
+    buttons = [
+        [InlineKeyboardButton("✅ Upload as Document", callback_data="set_upload_document" if user_upload_type != "document" else "selected")],
+        [InlineKeyboardButton("✅ Upload as Video", callback_data="set_upload_video" if user_upload_type != "video" else "selected")]
+    ]
+    
+    await msg.reply_text(
+        "Select your upload type:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+    @Client.on_callback_query()
+    
+async def handle_upload_settings_callback(bot, query):
+    user_id = query.from_user.id
+    
+    if query.data == "set_upload_document":
+        await db.set_user_upload_type(user_id, "document")
+        await query.answer("Upload type set to Document.", show_alert=True)
+        
+    elif query.data == "set_upload_video":
+        await db.set_user_upload_type(user_id, "video")
+        await query.answer("Upload type set to Video.", show_alert=True)
+        
+    elif query.data == "selected":
+        await query.answer("Already selected.", show_alert=True)
+    
+    # Update message with the new button state
+    user_upload_type = await db.get_user_upload_type(user_id)
+    buttons = [
+        [InlineKeyboardButton("✅ Upload as Document", callback_data="set_upload_document" if user_upload_type != "document" else "selected")],
+        [InlineKeyboardButton("✅ Upload as Video", callback_data="set_upload_video" if user_upload_type != "video" else "selected")]
+    ]
+    await query.message.edit_text(
+        "Select your upload type:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
