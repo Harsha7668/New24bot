@@ -126,7 +126,14 @@ async def handle_upload_settings_callback(bot, query):
     
     buttons = [[document_button], [video_button]]
     
-    await query.message.edit_text(
-        "Select your upload type:",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
+    # Only edit the message if there is a change
+    current_text = query.message.text
+    new_text = "Select your upload type:"
+    current_markup = query.message.reply_markup
+    new_markup = InlineKeyboardMarkup(buttons)
+    
+    if current_text != new_text or current_markup != new_markup:
+        await query.message.edit_text(
+            new_text,
+            reply_markup=new_markup
+        )
