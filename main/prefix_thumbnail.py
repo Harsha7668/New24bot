@@ -1,5 +1,6 @@
 from pyrogram import Client, filters
 from helper.database import db
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 @Client.on_message(filters.command("setthumbnail") & filters.private)
 async def set_thumbnail(bot, msg):
