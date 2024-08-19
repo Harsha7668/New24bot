@@ -1,4 +1,7 @@
-pyrogram
-Tgcrypto
 
+pyrofork 
+tgcrypto
+ffmpeg-python
+motor
+ffmpeg
 
