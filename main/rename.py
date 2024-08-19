@@ -1,61 +1,104 @@
 #ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
 import time, os
-from pyrogram import Client, filters, enums
-from config import DOWNLOAD_LOCATION, CAPTION
+from pyrofork import Client, filters
+from pyrofork.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
 
 #ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
 #RENAME
-@Client.on_message(filters.private & filters.command("rename"))            
+@Client.on_message(filters.command("rename") & filters.chat(GROUP))
 async def rename_file(bot, msg):
+    if len(msg.command) < 2 or not msg.reply_to_message:
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
+
     reply = msg.reply_to_message
-    if len(msg.command) < 2 or not reply:
-       return await msg.reply_text("Please Reply To An File or video or audio With filename + .extension eg:-(`.mkv` or `.mp4` or `.zip`)")
     media = reply.document or reply.audio or reply.video
     if not media:
-       await msg.reply_text("Please Reply To An File or video or audio With filename + .extension eg:-(`.mkv` or `.mp4` or `.zip`)")
-    og_media = getattr(reply, reply.media.value)
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
+
     new_name = msg.text.split(" ", 1)[1]
-    sts = await msg.reply_text("🚀Downloading.....⚡")
+    
+    # Retrieve user-specific prefix and caption template from the database
+    prefix = await db.get_user_prefix(msg.from_user.id)
+    caption_template = await db.get_user_caption(msg.from_user.id)
+    
+    if prefix:
+        new_name = f"{prefix} - {new_name}"
+
+    sts = await msg.reply_text("🚀 Downloading... ⚡")
     c_time = time.time()
-    downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀Download Started...⚡️", sts, c_time)) 
-    filesize = humanbytes(og_media.file_size)                
-    if CAPTION:
-        try:
-            cap = CAPTION.format(file_name=new_name, file_size=filesize)
-        except Exception as e:            
-            return await sts.edit(text=f"Your caption Error unexpected keyword ●> ({e})")           
-    else:
-        cap = f"{new_name}\n\n🌟size : {filesize}"
+    downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+    filesize = humanbytes(media.file_size)
 
-    #ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
-
-    dir = os.listdir(DOWNLOAD_LOCATION)
-    if len(dir) == 0:
-        file_thumb = await bot.download_media(og_media.thumbs[0].file_id)
-        og_thumbnail = file_thumb
+    if caption_template:
+        caption = caption_template.format(
+            filename=new_name,
+            filesize=filesize,
+            duration="N/A"  # Adjust if duration is available
+        )
     else:
+        caption = f"📕 Name ➠ : {new_name}\n\n🔗 Size ➠ : {filesize}\n\n⏰ Duration ➠ : N/A"
+
+    # Retrieve thumbnail from the database
+    thumbnail_file_id = await db.get_thumbnail(msg.from_user.id)
+    og_thumbnail = None
+    if thumbnail_file_id:
         try:
-            og_thumbnail = f"{DOWNLOAD_LOCATION}/thumbnail.jpg"
+            og_thumbnail = await bot.download_media(thumbnail_file_id)
+        except Exception:
+            pass
+    else:
+        if hasattr(media, 'thumbs') and media.thumbs:
+            try:
+                og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
+            except Exception:
+                pass
+
+    # Create inline buttons for selecting upload type
+    buttons = [
+        [InlineKeyboardButton("Upload as Video", callback_data="upload_video"),
+         InlineKeyboardButton("Upload as Document", callback_data="upload_document")]
+    ]
+    await sts.edit("Choose how to upload the file:", reply_markup=InlineKeyboardMarkup(buttons))
+
+@Client.on_callback_query()
+async def handle_upload_callback(bot, query):
+    user_id = query.from_user.id
+    msg = query.message
+    reply = msg.reply_to_message
+    media = reply.document or reply.video or reply.audio
+
+    if not media:
+        return await query.answer("No media found to upload.", show_alert=True)
+
+    # Get the user's caption from the database
+    caption_template = await db.get_user_caption(user_id)
+    if caption_template:
+        caption = caption_template.format(
+            filename=media.file_name,
+            filesize=humanbytes(media.file_size),
+            duration="N/A"  # Adjust if duration is available
+        )
+    else:
+        caption = f"📕 Name ➠ : {media.file_name}\n\n🔗 Size ➠ : {humanbytes(media.file_size)}\n\n⏰ Duration ➠ : N/A"
+
+    await msg.edit_text("🚀 Processing your request...")
+
+    c_time = time.time()
+    downloaded = await reply.download(progress=progress_message, progress_args=("🚀 Downloading...", msg, c_time))
+    
+    if query.data == "upload_video":
+        await msg.edit_text("💠 Uploading as video... ⚡")
+        try:
+            await bot.send_video(msg.chat.id, video=downloaded, caption=caption, thumb=og_thumbnail, progress=progress_message, progress_args=("💠 Upload Started... ⚡", msg, c_time))
         except Exception as e:
-            print(e)        
-            og_thumbnail = None
-        
-    await sts.edit("💠Uploading...⚡")
-    c_time = time.time()
-    try:
-        await bot.send_document(msg.chat.id, document=downloaded, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠Upload Started.....", sts, c_time))        
-    except Exception as e:  
-        return await sts.edit(f"Error {e}")                       
-    try:
-        if file_thumb:
-            os.remove(file_thumb)
-        os.remove(downloaded)      
-    except:
-        pass
-    await sts.delete()
+            return await msg.edit_text(f"Error: {e}")
+    elif query.data == "upload_document":
+        await msg.edit_text("💠 Uploading as document... ⚡")
+        try:
+            await bot.send_document(msg.chat.id, document=downloaded, caption=caption, thumb=og_thumbnail, progress=progress_message, progress_args=("💠 Upload Started... ⚡", msg, c_time))
+        except Exception as e:
+            return await msg.edit_text(f"Error: {e}")
 
-
-
-
-
+    os.remove(downloaded)
+    await msg.delete()
