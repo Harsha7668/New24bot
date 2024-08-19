@@ -84,18 +84,23 @@ async def upload_settings(bot, msg):
     user_upload_type = await db.get_user_upload_type(user_id)
     
     # Define buttons based on current preference
-    buttons = [
-        [InlineKeyboardButton("✅ Upload as Document", callback_data="set_upload_document" if user_upload_type != "document" else "selected")],
-        [InlineKeyboardButton("✅ Upload as Video", callback_data="set_upload_video" if user_upload_type != "video" else "selected")]
-    ]
+    document_button = InlineKeyboardButton(
+        "📄 Upload as Document" if user_upload_type == "document" else "Upload as Document ❌",
+        callback_data="set_upload_document"
+    )
+    video_button = InlineKeyboardButton(
+        "📹 Upload as Video" if user_upload_type == "video" else "Upload as Video ❌",
+        callback_data="set_upload_video"
+    )
+    
+    buttons = [[document_button], [video_button]]
     
     await msg.reply_text(
         "Select your upload type:",
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-   
-    
+
 @Client.on_callback_query()
 async def handle_upload_settings_callback(bot, query):
     user_id = query.from_user.id
@@ -107,16 +112,20 @@ async def handle_upload_settings_callback(bot, query):
     elif query.data == "set_upload_video":
         await db.set_user_upload_type(user_id, "video")
         await query.answer("Upload type set to Video.", show_alert=True)
-        
-    elif query.data == "selected":
-        await query.answer("Already selected.", show_alert=True)
     
     # Update message with the new button state
     user_upload_type = await db.get_user_upload_type(user_id)
-    buttons = [
-        [InlineKeyboardButton("✅ Upload as Document", callback_data="set_upload_document" if user_upload_type != "document" else "selected")],
-        [InlineKeyboardButton("✅ Upload as Video", callback_data="set_upload_video" if user_upload_type != "video" else "selected")]
-    ]
+    document_button = InlineKeyboardButton(
+        "📄 Upload as Document" if user_upload_type == "document" else "Upload as Document ❌",
+        callback_data="set_upload_document"
+    )
+    video_button = InlineKeyboardButton(
+        "📹 Upload as Video" if user_upload_type == "video" else "Upload as Video ❌",
+        callback_data="set_upload_video"
+    )
+    
+    buttons = [[document_button], [video_button]]
+    
     await query.message.edit_text(
         "Select your upload type:",
         reply_markup=InlineKeyboardMarkup(buttons)
