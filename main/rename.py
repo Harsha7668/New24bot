@@ -31,7 +31,7 @@ async def rename_file(bot, msg):
     # Define upload settings based on user preference
     if user_upload_type == "document":
         # Handle as document
-        if reply.document:
+        if reply.document or reply.video:
             sts = await msg.reply_text("🚀 Downloading... ⚡")
             c_time = time.time()
             downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
@@ -85,7 +85,7 @@ async def rename_file(bot, msg):
 
     elif user_upload_type == "video":
         # Handle as video
-        if reply.video:
+        if reply.document or reply.video:
             sts = await msg.reply_text("🚀 Downloading... ⚡")
             c_time = time.time()
             downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
