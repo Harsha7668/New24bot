@@ -81,7 +81,7 @@ async def rename_file(bot, msg):
                         pass
 
             # Change document metadata if applicable
-            output_file = f"modified_{new_name}"  # Set output file name with prefix to avoid overwrite
+            output_file = f"{new_name}"  # Set output file name with prefix to avoid overwrite
             await safe_edit_message(sts, "💠 Changing metadata... ⚡")
             try:
                 change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
@@ -146,7 +146,7 @@ async def rename_file(bot, msg):
                         pass
 
             # Change video metadata if applicable
-            output_file = f"modified_{new_name}"  # Set output file name with prefix to avoid overwrite
+            output_file = f"{new_name}"  # Set output file name with prefix to avoid overwrite
             await safe_edit_message(sts, "💠 Changing metadata... ⚡")
             try:
                 change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
