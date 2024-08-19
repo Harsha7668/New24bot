@@ -1,6 +1,6 @@
 import motor.motor_asyncio
 from pymongo import ReturnDocument
-
+from config import DATABASE_NAME, DATABASE_URI
 
 
 class Database:
@@ -81,3 +81,6 @@ class Database:
         """Gets the thumbnail file ID for a user."""
         user = await self.users_col.find_one({'_id': user_id})
         return user.get('thumbnail', '') if user else ''
+
+# Initialize the database instance
+db = Database(DATABASE_URI, DATABASE_NAME)    
