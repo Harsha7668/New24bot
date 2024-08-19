@@ -86,11 +86,11 @@ async def upload_settings(bot, msg):
     
     # Define buttons based on current preference
     document_button = InlineKeyboardButton(
-        "📄 Upload as Document" if user_upload_type == "document" else "Upload as Document ❌",
+        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
         callback_data="set_upload_document"
     )
     video_button = InlineKeyboardButton(
-        "📹 Upload as Video" if user_upload_type == "video" else "Upload as Video ❌",
+        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
         callback_data="set_upload_video"
     )
     
@@ -117,11 +117,11 @@ async def handle_upload_settings_callback(bot, query):
     # Update message with the new button state
     user_upload_type = await db.get_user_upload_type(user_id)
     document_button = InlineKeyboardButton(
-        "📄 Upload as Document" if user_upload_type == "document" else "Upload as Document ❌",
+        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
         callback_data="set_upload_document"
     )
     video_button = InlineKeyboardButton(
-        "📹 Upload as Video" if user_upload_type == "video" else "Upload as Video ❌",
+        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
         callback_data="set_upload_video"
     )
     
