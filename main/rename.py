@@ -1,90 +1,103 @@
 import time, os, subprocess
 from pyrogram import Client, filters
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ForceReply
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
 from helper.database import db
 
 
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+import os
+import time
+
 @Client.on_message(filters.command("rename") & filters.private & filters.reply)
-async def upload_file(client, message):
-    reply_message = message.reply_to_message
-    media = reply_message.document or reply_message.video or reply_message.audio
+async def rename_file(bot, msg):
+    if len(msg.command) < 2:
+        return await msg.reply_text("Please provide a new filename with the extension (e.g., .mkv, .mp4, .zip).")
 
+    reply = msg.reply_to_message
+    media = reply.document or reply.audio or reply.video
     if not media:
-        return await message.reply_text("Please reply to a file, video, or audio that you want to upload.")
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
 
-    # Prompt the user to enter a new filename using ForceReply
-    await message.reply("Please enter the new filename (with or without extension):", reply_markup=ForceReply(selective=True))
+    new_name = msg.text.split(" ", 1)[1]
 
-@Client.on_message(filters.private & filters.reply)
-async def refunc(client, message):
-    reply_message = message.reply_to_message
-    if (reply_message.reply_markup) and isinstance(reply_message.reply_markup, ForceReply):
-        new_name = message.text
+    # Add user-specific prefix
+    prefix = await db.get_user_prefix(msg.from_user.id)
+    if prefix:
+        new_name = f"{prefix} - {new_name}"
 
-        # Retrieve user-specific prefix from the database
-        prefix = await db.get_user_prefix(message.from_user.id)
-        if prefix:
-            new_name = f"{prefix} - {new_name}"
+    sts = await msg.reply_text("🚀 Downloading... ⚡")
+    c_time = time.time()
+    downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+    filesize = humanbytes(media.file_size)
 
-        await message.delete()  # Delete the user's filename message
-        msg = await client.get_messages(message.chat.id, reply_message.id)
-        file = msg.reply_to_message
-        media = file.document or file.video or file.audio
+    # Generate caption with metadata
+    caption_template = await db.get_user_caption(msg.from_user.id)
+    if caption_template:
+        try:
+            cap = caption_template.format(file_name=new_name, file_size=filesize)
+        except KeyError as e:
+            return await sts.edit(text=f"Caption error: unexpected keyword ({e})")
+    else:
+        cap = f"{new_name}\n\n🌟 Size: {filesize}"
 
-        if not "." in new_name:
-            if "." in media.file_name:
-                extn = media.file_name.rsplit('.', 1)[-1]
-            else:
-                extn = "mkv"
-            new_name = new_name + "." + extn
-        await reply_message.delete()
+    # Retrieve thumbnail from the database
+    thumbnail_file_id = await db.get_thumbnail(msg.from_user.id)
+    og_thumbnail = None
+    if thumbnail_file_id:
+        try:
+            og_thumbnail = await bot.download_media(thumbnail_file_id)
+        except Exception:
+            pass
+    else:
+        if hasattr(media, 'thumbs') and media.thumbs:
+            try:
+                og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
+            except Exception:
+                pass
 
-        # Create inline buttons for selecting upload type
-        buttons = [[InlineKeyboardButton("📁 Dᴏᴄᴜᴍᴇɴᴛ", callback_data="upload_document")]]
-        if media.mime_type.startswith("video/"):
-            buttons.append([InlineKeyboardButton("🎥 Vɪᴅᴇᴏ", callback_data="upload_video")])
-        elif media.mime_type.startswith("audio/"):
-            buttons.append([InlineKeyboardButton("🎵 Aᴜᴅɪᴏ", callback_data="upload_audio")])
+    # Store file info temporarily for the next action (upload as document or video)
+    await db.store_temp_file_info(msg.from_user.id, {
+        "file_path": downloaded,
+        "new_name": new_name,
+        "caption": cap,
+        "thumbnail": og_thumbnail,
+        "file_size": os.path.getsize(downloaded),
+    })
 
-        await message.reply(
-            text=f"**Sᴇʟᴇᴄᴛ Tʜᴇ Oᴜᴛᴩᴜᴛ Fɪʟᴇ Tyᴩᴇ**\n**• Fɪʟᴇ Nᴀᴍᴇ :-** `{new_name}`",
-            reply_to_message_id=file.id,
-            reply_markup=InlineKeyboardMarkup(buttons)
-        )
+    # Show inline buttons for selecting upload type
+    buttons = [
+        [InlineKeyboardButton("📁 Upload as Document", callback_data="upload_document")],
+        [InlineKeyboardButton("🎥 Upload as Video", callback_data="upload_video")]
+    ]
+    await sts.edit("Select your upload type:", reply_markup=InlineKeyboardMarkup(buttons))
+
 
 @Client.on_callback_query()
-async def handle_upload_callback(client, query):
+async def handle_upload_callback(bot, query):
     user_id = query.from_user.id
-    msg = query.message
-    file = msg.reply_to_message
-    media = file.document or file.video or file.audio
-    if not media:
-        return await query.answer("No media found to upload.", show_alert=True)
+    file_info = await db.get_temp_file_info(user_id)
+    if not file_info:
+        return await query.answer("No file information found. Please try again.", show_alert=True)
 
-    new_name = msg.text.split(":")[1].strip().strip("`")  # Extract filename from message text
+    file_path = file_info['file_path']
+    new_name = file_info['new_name']
+    caption = file_info['caption']
+    thumbnail = file_info['thumbnail']
 
-    # Download the media file with the new name
-    sts = await msg.edit_text("🚀 Downloading...")
-    c_time = time.time()
-    downloaded = await file.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Downloading...", sts, c_time))
+    if query.data == "upload_document":
+        await query.message.edit_text("💠 Uploading as document... ⚡")
+        try:
+            await bot.send_document(query.message.chat.id, document=file_path, thumb=thumbnail, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", query.message, time.time()))
+        except Exception as e:
+            return await query.message.edit_text(f"Error: {e}")
+    elif query.data == "upload_video":
+        await query.message.edit_text("💠 Uploading as video... ⚡")
+        try:
+            await bot.send_video(query.message.chat.id, video=file_path, thumb=thumbnail, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", query.message, time.time()))
+        except Exception as e:
+            return await query.message.edit_text(f"Error: {e}")
 
-    # Get the user's caption from the database
-    caption_template = await db.get_user_caption(user_id)
-    filesize = humanbytes(media.file_size)
-    caption = caption_template.format(filename=new_name, filesize=filesize) if caption_template else f"📕 Name ➠ : {new_name}\n\n🔗 Size ➠ : {filesize}"
-
-    if query.data == "upload_video":
-        await msg.edit_text("💠 Uploading as video... ⚡")
-        await client.send_video(msg.chat.id, video=downloaded, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", msg, c_time))
-    elif query.data == "upload_document":
-        await msg.edit_text("💠 Uploading as document... ⚡")
-        await client.send_document(msg.chat.id, document=downloaded, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", msg, c_time))
-    elif query.data == "upload_audio":
-        await msg.edit_text("💠 Uploading as audio... ⚡")
-        await client.send_audio(msg.chat.id, audio=downloaded, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", msg, c_time))
-
-    # Cleanup
-    os.remove(downloaded)
-    await msg.delete()
+    os.remove(file_path)
+    await query.message.delete()
