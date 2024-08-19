@@ -3,12 +3,32 @@ from pymongo import ReturnDocument
 from config import DATABASE_NAME, DATABASE_URI
 
 
+
 class Database:
     def __init__(self, uri, database_name):
         self._client = motor.motor_asyncio.AsyncIOMotorClient(uri)
         self.db = self._client[database_name]
         self.users_col = self.db["users"]
         self.photos_col = self.db['photos']  # Assuming you want to keep this collection
+        self.temp_file_info_col = self.db['temp_file_info']  # New collection for temporary file info
+
+    async def store_temp_file_info(self, user_id, file_info):
+        """Store temporary file info for a user."""
+        await self.temp_file_info_col.update_one(
+            {'user_id': user_id},
+            {'$set': file_info},
+            upsert=True
+        )
+
+    async def get_temp_file_info(self, user_id):
+        """Retrieve temporary file info for a user."""
+        file_info = await self.temp_file_info_col.find_one({'user_id': user_id})
+        return file_info
+
+    async def remove_temp_file_info(self, user_id):
+        """Remove temporary file info for a user."""
+        await self.temp_file_info_col.delete_one({'user_id': user_id})
+
 
     async def save_metadata_titles(self, user_id, video_title, audio_title, subtitle_title):
         """Saves metadata titles for video, audio, and subtitles."""
