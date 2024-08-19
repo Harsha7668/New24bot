@@ -1,5 +1,5 @@
 #ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
-from pyrogram.types import *
+from pyrofork.types import *
 import math
 import os
 import time
