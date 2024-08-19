@@ -1,11 +1,9 @@
-#ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
-import time, os
+import time, os, subprocess
 from pyrofork import Client, filters
 from pyrofork.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
+from helper.ffmpeg import change_video_metadata
 
-#ALL FILES UPLOADED - CREDITS 🌟 - @Sunrises_24
-#RENAME
 @Client.on_message(filters.command("rename") & filters.chat(GROUP))
 async def rename_file(bot, msg):
     if len(msg.command) < 2 or not msg.reply_to_message:
@@ -18,10 +16,11 @@ async def rename_file(bot, msg):
 
     new_name = msg.text.split(" ", 1)[1]
     
-    # Retrieve user-specific prefix and caption template from the database
+    # Retrieve user-specific prefix, caption template, and metadata from the database
     prefix = await db.get_user_prefix(msg.from_user.id)
     caption_template = await db.get_user_caption(msg.from_user.id)
-    
+    video_title, audio_title, subtitle_title = await db.get_metadata_titles(msg.from_user.id)
+
     if prefix:
         new_name = f"{prefix} - {new_name}"
 
@@ -38,6 +37,12 @@ async def rename_file(bot, msg):
         )
     else:
         caption = f"📕 Name ➠ : {new_name}\n\n🔗 Size ➠ : {filesize}\n\n⏰ Duration ➠ : N/A"
+
+    # Apply metadata if titles are available
+    if video_title or audio_title or subtitle_title:
+        output_path = f"/path/to/output/{new_name}"  # Adjust the path as needed
+        change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_path)
+        downloaded = output_path
 
     # Retrieve thumbnail from the database
     thumbnail_file_id = await db.get_thumbnail(msg.from_user.id)
