@@ -1,13 +1,11 @@
 #SUNRISES24BOTS
 #TG:@SUNRISES_24
-from pyrogram import Client
+from pyrofork import Client
 from config import *
 import os
 
 class Bot(Client):
-    if not os.path.isdir(DOWNLOAD_LOCATION):
-        os.makedirs(DOWNLOAD_LOCATION)
-
+   
     def __init__(self):
         super().__init__(
             name="INFINITYSTARRENAME24BOT",
