@@ -6,7 +6,13 @@ from helper.ffmpeg import change_video_metadata
 from helper.database import db
 from pyrogram.types import Document, Video
 
-
+async def safe_edit_message(message, new_text):
+    try:
+        if message.text != new_text:
+            await message.edit(new_text)
+    except Exception as e:
+        print(f"Failed to edit message: {e}")
+        
 @Client.on_message(filters.private & filters.command("rename"))
 async def rename_file(bot, msg):
     if len(msg.command) < 2 or not msg.reply_to_message:
