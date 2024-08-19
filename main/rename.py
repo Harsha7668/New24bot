@@ -6,10 +6,6 @@ from helper.ffmpeg import change_video_metadata
 from helper.database import db
 
 
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-import os
-import time
-
 @Client.on_message(filters.command("rename") & filters.private & filters.reply)
 async def rename_file(bot, msg):
     if len(msg.command) < 2:
@@ -72,32 +68,3 @@ async def rename_file(bot, msg):
         [InlineKeyboardButton("🎥 Upload as Video", callback_data="upload_video")]
     ]
     await sts.edit("Select your upload type:", reply_markup=InlineKeyboardMarkup(buttons))
-
-
-@Client.on_callback_query()
-async def handle_upload_callback(bot, query):
-    user_id = query.from_user.id
-    file_info = await db.get_temp_file_info(user_id)
-    if not file_info:
-        return await query.answer("No file information found. Please try again.", show_alert=True)
-
-    file_path = file_info['file_path']
-    new_name = file_info['new_name']
-    caption = file_info['caption']
-    thumbnail = file_info['thumbnail']
-
-    if query.data == "upload_document":
-        await query.message.edit_text("💠 Uploading as document... ⚡")
-        try:
-            await bot.send_document(query.message.chat.id, document=file_path, thumb=thumbnail, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", query.message, time.time()))
-        except Exception as e:
-            return await query.message.edit_text(f"Error: {e}")
-    elif query.data == "upload_video":
-        await query.message.edit_text("💠 Uploading as video... ⚡")
-        try:
-            await bot.send_video(query.message.chat.id, video=file_path, thumb=thumbnail, caption=caption, progress=progress_message, progress_args=("💠 Upload Started... ⚡", query.message, time.time()))
-        except Exception as e:
-            return await query.message.edit_text(f"Error: {e}")
-
-    os.remove(file_path)
-    await query.message.delete()
