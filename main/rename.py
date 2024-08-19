@@ -1,6 +1,6 @@
 import time, os, subprocess
-from pyrofork import Client, filters
-from pyrofork.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
 from helper.database import db
