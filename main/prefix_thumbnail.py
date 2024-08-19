@@ -93,8 +93,9 @@ async def upload_settings(bot, msg):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-    @Client.on_callback_query()
+   
     
+@Client.on_callback_query()
 async def handle_upload_settings_callback(bot, query):
     user_id = query.from_user.id
     
