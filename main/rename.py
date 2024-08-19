@@ -3,6 +3,7 @@ from pyrofork import Client, filters
 from pyrofork.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
+from helper.database import db
 
 @Client.on_message(filters.command("rename") & filters.chat(GROUP))
 async def rename_file(bot, msg):
