@@ -1,4 +1,5 @@
 import subprocess
+import ffmpeg
 
 # Function to apply metadata to the file using FFmpeg
 def change_video_metadata(input_path, video_title, audio_title, subtitle_title, output_path):
