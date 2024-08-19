@@ -10,25 +10,18 @@ class Database:
         self.db = self._client[database_name]
         self.users_col = self.db["users"]
         self.photos_col = self.db['photos']  # Assuming you want to keep this collection
-        self.temp_file_info_col = self.db['temp_file_info']  # New collection for temporary file info
+        
 
-    async def store_temp_file_info(self, user_id, file_info):
-        """Store temporary file info for a user."""
-        await self.temp_file_info_col.update_one(
-            {'user_id': user_id},
-            {'$set': file_info},
+    async def set_user_upload_type(self, user_id, upload_type):
+        await self.users_col.update_one(
+            {"user_id": user_id},
+            {"$set": {"upload_type": upload_type}},
             upsert=True
         )
-
-    async def get_temp_file_info(self, user_id):
-        """Retrieve temporary file info for a user."""
-        file_info = await self.temp_file_info_col.find_one({'user_id': user_id})
-        return file_info
-
-    async def remove_temp_file_info(self, user_id):
-        """Remove temporary file info for a user."""
-        await self.temp_file_info_col.delete_one({'user_id': user_id})
-
+        
+    async def get_user_upload_type(self, user_id):
+        user = await self.users_col.find_one({"user_id": user_id})
+        return user.get("upload_type", "document")  # Default to "document"    
 
     async def save_metadata_titles(self, user_id, video_title, audio_title, subtitle_title):
         """Saves metadata titles for video, audio, and subtitles."""
