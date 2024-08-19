@@ -4,7 +4,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
 from helper.database import db
-
+from pyrogram.types import Document, Video
 
 
 @Client.on_message(filters.private & filters.command("rename"))
@@ -74,13 +74,24 @@ async def rename_file(bot, msg):
                     except Exception:
                         pass
 
+            # Change document metadata if applicable
+            output_file = f"modified_{new_name}"  # Set output file name with prefix to avoid overwrite
+            await safe_edit_message(sts, "💠 Changing metadata... ⚡")
+            try:
+                change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
+            except Exception as e:
+                await safe_edit_message(sts, f"Error changing metadata: {e}")
+                os.remove(downloaded)
+                return
+
             # Upload the file
             try:
-                await bot.send_document(msg.chat.id, document=downloaded, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                await bot.send_document(msg.chat.id, document=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
             except Exception as e:
                 return await sts.edit(f"Error: {e}")
 
             os.remove(downloaded)
+            os.remove(output_file)
             await sts.delete()
 
     elif user_upload_type == "video":
@@ -129,15 +140,23 @@ async def rename_file(bot, msg):
                         pass
 
             # Change video metadata if applicable
-            await change_video_metadata(downloaded, video_title, audio_title, subtitle_title)
+            output_file = f"modified_{new_name}"  # Set output file name with prefix to avoid overwrite
+            await safe_edit_message(sts, "💠 Changing metadata... ⚡")
+            try:
+                change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
+            except Exception as e:
+                await safe_edit_message(sts, f"Error changing metadata: {e}")
+                os.remove(downloaded)
+                return
 
             # Upload the file
             try:
-                await bot.send_video(msg.chat.id, video=downloaded, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                await bot.send_video(msg.chat.id, video=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
             except Exception as e:
                 return await sts.edit(f"Error: {e}")
 
             os.remove(downloaded)
+            os.remove(output_file)
             await sts.delete()
         else:
             await msg.reply_text("Error: The file is not a video.")
