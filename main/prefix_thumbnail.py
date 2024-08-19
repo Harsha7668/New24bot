@@ -56,3 +56,19 @@ async def set_prefix(bot, msg):
     # Store the prefix in the database
     await db.set_user_prefix(msg.from_user.id, prefix)
     await msg.reply_text(f"✅ Prefix set to: {prefix}")
+
+@Client.on_message(filters.private & filters.command("setmetadata"))
+async def set_metadata_command(client, msg):
+    if len(msg.command) < 2:
+        await msg.reply_text("Invalid command format. Use: /setmetadata video_title | audio_title | subtitle_title")
+        return
+    
+    titles = msg.text.split(" ", 1)[1].split(" | ")
+    if len(titles) != 3:
+        await msg.reply_text("Invalid number of titles. Use: /setmetadata video_title | audio_title | subtitle_title")
+        return
+    
+    user_id = msg.from_user.id
+    await db.save_metadata_titles(user_id, titles[0].strip(), titles[1].strip(), titles[2].strip())
+    
+    await msg.reply_text("Metadata titles set successfully ✅.")
