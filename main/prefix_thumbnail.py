@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from Database.database import db
+from helper.database import db
 
 @Client.on_message(filters.command("setthumbnail") & filters.private)
 async def set_thumbnail(bot, msg):
