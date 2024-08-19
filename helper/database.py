@@ -10,7 +10,6 @@ class Database:
         self.db = self._client[database_name]
         self.users_col = self.db["users"]
         self.photos_col = self.db['photos']  # Assuming you want to keep this collection
-        
 
     async def set_user_upload_type(self, user_id, upload_type):
         await self.users_col.update_one(
@@ -21,8 +20,11 @@ class Database:
         
     async def get_user_upload_type(self, user_id):
         user = await self.users_col.find_one({"user_id": user_id})
-        return user.get("upload_type", "document")  # Default to "document"    
+        if user is None:
+            return "document"  # Default to "document" if user is not found
+        return user.get("upload_type", "document")  # Default to "document" if "upload_type" is not found        
 
+    
     async def save_metadata_titles(self, user_id, video_title, audio_title, subtitle_title):
         """Saves metadata titles for video, audio, and subtitles."""
         result = await self.users_col.find_one_and_update(
