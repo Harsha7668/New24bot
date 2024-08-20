@@ -505,7 +505,7 @@ async def handle_settings_callback(bot, query):
             await query.answer(f"Upload Type set to {upload_type}.")
         else:
             await query.answer("Invalid upload type selected.", show_alert=True)
-        await update_settings_buttons(query)
+        await show_main_settings(query)
 
     elif data.startswith("set_upload_destination_"):
         upload_destination = data.split("_")[-1].replace("_", " ").title()
@@ -515,7 +515,7 @@ async def handle_settings_callback(bot, query):
             await query.answer(f"Upload Destination set to {upload_destination}.")
         else:
             await query.answer("Invalid upload destination.", show_alert=True)
-        await update_settings_buttons(query)
+        await show_main_settings(query)
 
     elif data == "back_to_settings":
         await show_main_settings(query)
@@ -541,6 +541,7 @@ async def show_main_settings(query):
             reply_markup=InlineKeyboardMarkup(buttons)
         )
     except MessageNotModified:
+        # Content hasn't changed; no need to update the message
         pass
 
 def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption, upload_type, upload_destination):
