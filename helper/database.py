@@ -1,9 +1,6 @@
 
 from pymongo import ReturnDocument
 from config import DATABASE_NAME, DATABASE_URI
-
-
-
 import motor.motor_asyncio
 
 class Database:
@@ -16,18 +13,26 @@ class Database:
         self.gofile_col = self.db['gofile']
         self.gdrive_col = self.db['gdrive']
 
-    async def set_user_upload_destination(self, user_id, destination):
-        """Set the upload destination for a user."""
-        await self.upload_destinations_col.update_one(
-            {"user_id": user_id},
-            {"$set": {"destination": destination}},
-            upsert=True
-        )
-
     async def get_user_upload_destination(self, user_id):
-        """Get the upload destination for a user."""
-        doc = await self.upload_destinations_col.find_one({"user_id": user_id})
-        return doc.get("destination") if doc else None
+        # Fetch user settings from the database
+        user_settings = await self.upload_destinations_col.find_one({"user_id": user_id})
+        if user_settings:
+            return user_settings.get("upload_destination", "telegram")  # Default to "telegram" if not set
+        return "telegram"  # Default to "telegram" if user settings not found
+
+    async def set_user_upload_destination(self, user_id, destination):
+        # Validate the destination value
+        if destination not in ["telegram", "gdrive", "gofile"]:
+            raise ValueError("Invalid upload destination")
+
+        # Update user settings in the database
+        result = await self.upload_destinations_col.update_one(
+            {"user_id": user_id},
+            {"$set": {"upload_destination": destination}},
+            upsert=True  # Create a new document if none exists
+        )
+        return result.modified_count > 0 or result.upserted_id is not None
+
 
     async def set_gofile_api_key(self, user_id, api_key):
         """Store the Gofile API key for a user."""
