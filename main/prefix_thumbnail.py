@@ -258,6 +258,7 @@ async def handle_upload_settings_callback(bot, query):
             pass
 
 """
+"""
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -398,7 +399,7 @@ async def update_settings_buttons(query):
     except MessageNotModified:
         pass
 
-
+"""
 
 @Client.on_message(filters.command("clear") & filters.user(ADMIN))
 async def clear_database_handler(client: Client, msg: Message):
@@ -409,7 +410,6 @@ async def clear_database_handler(client: Client, msg: Message):
         await msg.reply_text(f"An error occurred: {e}")
 
 
-"""
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -599,4 +599,4 @@ def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption
     ]
 
     return buttons
-"""
+
