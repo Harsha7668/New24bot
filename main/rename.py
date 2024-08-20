@@ -242,6 +242,7 @@ async def rename_file(bot, msg):
                     await sts.delete()
                 
 """
+"""
 
 @Client.on_message(filters.private & filters.command("rename"))
 async def rename_file(bot, msg):
@@ -335,3 +336,146 @@ async def rename_file(bot, msg):
             if os.path.exists(output_file):
                 os.remove(output_file)
             await sts.delete()
+"""
+
+@Client.on_message(filters.private & filters.command("rename"))
+async def rename_file(bot, msg):
+    if len(msg.command) < 2 or not msg.reply_to_message:
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
+
+    reply = msg.reply_to_message
+    media = reply.document or reply.audio or reply.video
+
+    if not media:
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
+
+    new_name = msg.text.split(" ", 1)[1]
+
+    prefix = await db.get_user_prefix(msg.from_user.id)
+    if prefix:
+        new_name = f"{prefix} - {new_name}"
+
+    user_upload_type = await db.get_user_upload_type(msg.from_user.id)
+    user_destination = await db.get_user_upload_destination(msg.from_user.id)
+
+    if reply.document or reply.video:
+        sts = await msg.reply_text("🚀 Downloading... ⚡")
+        c_time = time.time()
+
+        try:
+            downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+            filesize = humanbytes(media.file_size)
+
+            metadata_titles = await db.get_metadata_titles(msg.from_user.id)
+            video_title = metadata_titles.get('video_title', '')
+            audio_title = metadata_titles.get('audio_title', '')
+            subtitle_title = metadata_titles.get('subtitle_title', '')
+
+            caption_template = await db.get_user_caption(msg.from_user.id)
+            cap = caption_template.format(
+                file_name=new_name,
+                file_size=filesize,
+                video_title=video_title,
+                audio_title=audio_title,
+                subtitle_title=subtitle_title
+            ) if caption_template else f"{new_name}\n\n🌟 Size: {filesize}"
+
+            thumbnail_file_id = await db.get_thumbnail(msg.from_user.id)
+            og_thumbnail = None
+            if thumbnail_file_id:
+                try:
+                    og_thumbnail = await bot.download_media(thumbnail_file_id)
+                except Exception:
+                    pass
+            elif hasattr(media, 'thumbs') and media.thumbs:
+                try:
+                    og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
+                except Exception:
+                    pass
+
+            output_file = f"{new_name}"
+            await safe_edit_message(sts, "💠 Changing metadata... ⚡")
+            try:
+                change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
+            except Exception as e:
+                await safe_edit_message(sts, f"Error changing metadata: {e}")
+                return
+
+            if user_upload_type == "document":
+                if user_destination in ["telegram", "both"]:
+                    try:
+                        await bot.send_document(msg.chat.id, document=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                    except Exception as e:
+                        await sts.edit(f"Error: {e}")
+
+                if user_destination in ["gdrive", "both"]:
+                    try:
+                        file_link = await upload_to_google_drive(output_file, new_name, sts)
+                        if file_link:
+                            await msg.reply_text(
+                                f"File uploaded to Google Drive!\n\n"
+                                f"📁 **File Name:** {new_name}\n"
+                                f"💾 **Size:** {filesize}\n"
+                                f"🔗 **Link:** [View File]({file_link})"
+                            )
+                        else:
+                            await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                    except Exception as e:
+                        await msg.reply_text(f"Error: {e}")
+
+                if user_destination in ["gofile", "both"]:
+                    try:
+                        gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                        if not gofile_api_key:
+                            return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                        
+                        upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                        if "http" in upload_result:
+                            await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
+                        else:
+                            await msg.reply_text(upload_result)
+                    except Exception as e:
+                        await msg.reply_text(f"Error: {e}")
+
+            elif user_upload_type == "video":
+                if user_destination in ["telegram", "both"]:
+                    try:
+                        await bot.send_video(msg.chat.id, video=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                    except Exception as e:
+                        await sts.edit(f"Error: {e}")
+
+                if user_destination in ["gdrive", "both"]:
+                    try:
+                        file_link = await upload_to_google_drive(output_file, new_name, sts)
+                        if file_link:
+                            await msg.reply_text(
+                                f"File uploaded to Google Drive!\n\n"
+                                f"📁 **File Name:** {new_name}\n"
+                                f"💾 **Size:** {filesize}\n"
+                                f"🔗 **Link:** [View File]({file_link})"
+                            )
+                        else:
+                            await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                    except Exception as e:
+                        await msg.reply_text(f"Error: {e}")
+
+                if user_destination in ["gofile", "both"]:
+                    try:
+                        gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                        if not gofile_api_key:
+                            return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                        
+                        upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                        if "http" in upload_result:
+                            await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
+                        else:
+                            await msg.reply_text(upload_result)
+                    except Exception as e:
+                        await msg.reply_text(f"Error: {e}")
+
+            finally:
+                if os.path.exists(downloaded):
+                    os.remove(downloaded)
+                if os.path.exists(output_file):
+                    os.remove(output_file)
+                await sts.delete()
