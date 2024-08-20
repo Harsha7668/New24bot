@@ -3,6 +3,7 @@ from helper.database import db
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
 from config import *
+from pyrogram.types import Message
 
 @Client.on_message(filters.command("setthumbnail") & filters.private)
 async def set_thumbnail(bot, msg):
