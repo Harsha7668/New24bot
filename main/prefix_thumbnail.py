@@ -500,14 +500,21 @@ async def handle_settings_callback(bot, query):
 
     elif data.startswith("set_upload_type_"):
         upload_type = data.split("_")[-1].capitalize()
-        await db.set_user_upload_type(user_id, upload_type)
-        await query.answer(f"Upload Type set to {upload_type}.")
+        if upload_type in ["Document", "Video"]:
+            await db.set_user_upload_type(user_id, upload_type)
+            await query.answer(f"Upload Type set to {upload_type}.")
+        else:
+            await query.answer("Invalid upload type selected.", show_alert=True)
         await update_settings_buttons(query)
 
     elif data.startswith("set_upload_destination_"):
         upload_destination = data.split("_")[-1].replace("_", " ").title()
-        await db.set_user_upload_destination(user_id, upload_destination)
-        await query.answer(f"Upload Destination set to {upload_destination}.")
+        valid_destinations = ['Telegram', 'Google Drive', 'GoFile']
+        if upload_destination in valid_destinations:
+            await db.set_user_upload_destination(user_id, upload_destination)
+            await query.answer(f"Upload Destination set to {upload_destination}.")
+        else:
+            await query.answer("Invalid upload destination.", show_alert=True)
         await update_settings_buttons(query)
 
     elif data == "back_to_settings":
