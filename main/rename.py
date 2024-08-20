@@ -578,12 +578,8 @@ async def rename_file(bot, msg):
                         os.remove(downloaded)
                     if os.path.exists(output_file):
                         os.remove(output_file)
-
-            await sts.delete()
-       else:
-            await msg.reply_text("Error: Unsupported upload type.")
-
-
+                    await sts.delete()
+                
 
 
 
