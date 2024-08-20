@@ -322,7 +322,7 @@ async def handle_settings_callback(bot, query):
         metadata = await db.get_metadata_titles(user_id)
         if metadata:
             video_title, audio_title, subtitle_title = metadata
-            metadata_text = f"**Video Title:** {video_title}\n**Audio Title:** {audio_title}\n**Subtitle Title:** {subtitle_title}"
+            metadata_text = f"**Video Title:** {titles.get('video_title', '')}\n**Audio Title:** {titles.get('audio_title', '')}\n**Subtitle Title:** {titles.get('subtitle_title', '')}"
             await query.message.edit_text(metadata_text)
         else:
             await query.answer("No metadata set.", show_alert=True)
