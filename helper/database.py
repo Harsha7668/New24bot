@@ -69,18 +69,11 @@ class Database:
             upsert=True
         )
 
-    async def get_user_upload_types(self, user_id):
+    async def get_user_upload_type(self, user_id):
         user = await self.users_col.find_one({"user_id": user_id})
         return user.get("upload_type", "document")  # Default to "document"
 
     
-    async def get_user_upload_type(self, user_id):
-        user = await self.users_col.find_one({"user_id": user_id})
-        if user is None:
-            # If user is None, return the default value
-            return "document"
-        return user.get("upload_type", "document")  # Default to "document"
-
     async def save_metadata_titles(self, user_id, video_title, audio_title, subtitle_title):
         """Saves metadata titles for video, audio, and subtitles."""
         result = await self.users_col.find_one_and_update(
