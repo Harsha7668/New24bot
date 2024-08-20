@@ -491,7 +491,7 @@ async def handle_settings_callback(bot, query):
             "Choose Upload Destination:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Telegram", callback_data="set_upload_destination_telegram")],
-                [InlineKeyboardButton("Google Drive", callback_data="set_upload_destination_google_drive")],
+                [InlineKeyboardButton("Google Drive", callback_data="set_upload_destination_gdrive")],
                 [InlineKeyboardButton("GoFile", callback_data="set_upload_destination_gofile")],
                 [InlineKeyboardButton("Back", callback_data="back_to_settings")]
             ])
