@@ -248,18 +248,18 @@ async def rename_file(bot, msg):
                 return
 
             # Upload the file based on user upload settings
-            if user_upload_type == "telegram":
+            if user_destination == "telegram":
                 try:
                     await bot.send_document(msg.chat.id, document=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
                 except Exception as e:
                     return await sts.edit(f"Error: {e}")
-            elif user_upload_type == "gdrive":
+            elif user_destination == "gdrive":
                 try:
                     file_link = await upload_to_google_drive(output_file, new_name, sts)
                     await sts.edit(f"File successfully mirrored and uploaded to Google Drive!\n\nGoogle Drive Link: [View File]({file_link})")
                 except Exception as e:
                     return await sts.edit(f"Error: {e}")
-            elif user_upload_type == "gofile":
+            elif user_destination == "gofile":
                 try:
                     download_url = await gofile_upload(bot, msg)
                     await sts.edit(f"Upload successful!\nDownload link: {download_url}")
@@ -326,18 +326,18 @@ async def rename_file(bot, msg):
                 return
 
             # Upload the file based on user upload settings
-            if user_upload_type == "telegram":
+            if user_destination == "telegram":
                 try:
                     await bot.send_video(msg.chat.id, video=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
                 except Exception as e:
                     return await sts.edit(f"Error: {e}")
-            elif user_upload_type == "gdrive":
+            elif user_destination == "gdrive":
                 try:
                     file_link = await upload_to_google_drive(output_file, new_name, sts)
                     await sts.edit(f"File successfully mirrored and uploaded to Google Drive!\n\nGoogle Drive Link: [View File]({file_link})")
                 except Exception as e:
                     return await sts.edit(f"Error: {e}")
-            elif user_upload_type == "gofile":
+            elif user_destination == "gofile":
                 try:
                     download_url = await gofile_upload(bot, msg)
                     await sts.edit(f"Upload successful!\nDownload link: {download_url}")
