@@ -142,3 +142,85 @@ async def handle_upload_settings_callback(bot, query):
             # Handle the case where the message content hasn't changed
             pass
 
+
+
+@Client.on_message(filters.private & filters.command("gdriveid"))
+async def gdrive_id(bot, msg):
+    user_id = msg.from_user.id
+    command_parts = msg.text.split(" ", 1)
+    
+    if len(command_parts) < 2:
+        return await msg.reply_text("Please provide your Google Drive folder ID. Usage: /gdriveid {your_folder_id}")
+    
+    gdrive_folder_id = command_parts[1].strip()
+    
+    # Save the Google Drive folder ID to the database
+    await db.set_gdrive_folder_id(user_id, gdrive_folder_id)
+    
+    await msg.reply_text("Google Drive folder ID has been successfully set.")
+
+
+
+@Client.on_message(filters.private & filters.command("gofilesetup"))
+async def gofile_setup(bot, msg):
+    user_id = msg.from_user.id
+    command_parts = msg.text.split(" ", 1)
+    
+    if len(command_parts) < 2:
+        return await msg.reply_text("Please provide your Gofile API key. Usage: /gofilesetup {your_api_key}")
+    
+    gofile_api_key = command_parts[1].strip()
+    
+    # Save the Gofile API key to the database
+    await db.set_gofile_api_key(user_id, gofile_api_key)
+    
+    await msg.reply_text("Gofile API key has been successfully set.")
+
+
+@Client.on_message(filters.private & filters.command("uploaddestinations"))
+async def upload_destinations(bot, msg):
+    user_id = msg.from_user.id
+    # Fetch current settings
+    user_gdrive_id = await db.get_gdrive_folder_id(user_id)
+    user_gofile_key = await db.get_gofile_api_key(user_id)
+
+    # Define buttons based on current settings
+    telegram_button = InlineKeyboardButton(
+        "📦 Upload to Telegram ✅" if await db.get_user_upload_destination(user_id) == "telegram" else "📦 Upload to Telegram ❌",
+        callback_data="set_upload_telegram"
+    )
+    gdrive_button = InlineKeyboardButton(
+        "🌐 Upload to Google Drive ✅" if await db.get_user_upload_destination(user_id) == "gdrive" else "🌐 Upload to Google Drive ❌",
+        callback_data="set_upload_gdrive"
+    )
+    gofile_button = InlineKeyboardButton(
+        "🔗 Upload to Gofile ✅" if await db.get_user_upload_destination(user_id) == "gofile" else "🔗 Upload to Gofile ❌",
+        callback_data="set_upload_gofile"
+    )
+
+    buttons = [
+        [telegram_button, gdrive_button, gofile_button]
+    ]
+    
+    await msg.reply_text(
+        "Select your upload destinations:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+@Client.on_callback_query()
+async def handle_callback(bot, query):
+    user_id = query.from_user.id
+    if query.data.startswith("set_upload_"):
+        setting = query.data.split("_")[2]
+        await db.set_user_upload_type(user_id, setting)
+        await query.answer(f"Upload type set to {setting.capitalize()}.", show_alert=True)
+    
+    elif query.data.startswith("set_upload_"):
+        destination = query.data.split("_")[2]
+        await db.set_user_upload_destination(user_id, destination)
+        await query.answer(f"Upload destination set to {destination.capitalize()}.", show_alert=True)
+
+    # Update message with new button states
+    await upload_settings(bot, query.message)  # For updating upload type
+    await upload_destinations(bot, query.message)  # For updating upload destinations
