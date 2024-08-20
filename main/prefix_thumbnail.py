@@ -411,8 +411,8 @@ async def settings(bot, msg):
     gofile_api_key = await db.get_gofile_api_key(user_id)
     prefix = await db.get_user_prefix(user_id)
     caption = await db.get_user_caption(user_id)
-    upload_type = await db.get_upload_type(user_id)
-    upload_destination = await db.get_upload_destination(user_id)
+    upload_type = await db.get_user_upload_type(user_id)
+    upload_destination = await db.get_user_upload_destination(user_id)
 
     # Create buttons for each setting
     view_thumbnail_button = InlineKeyboardButton(
@@ -528,19 +528,19 @@ async def set_upload_preference(bot, query):
     user_id = query.from_user.id
 
     if query.data == "set_upload_type_document":
-        await db.set_upload_type(user_id, "Document")
+        await db.set_user_upload_type(user_id, "Document")
         await query.answer("Upload Type set to Document.")
     elif query.data == "set_upload_type_video":
-        await db.set_upload_type(user_id, "Video")
+        await db.set_user_upload_type(user_id, "Video")
         await query.answer("Upload Type set to Video.")
     elif query.data == "set_upload_destination_telegram":
-        await db.set_upload_destination(user_id, "Telegram")
+        await db.set_user_upload_destination(user_id, "Telegram")
         await query.answer("Upload Destination set to Telegram.")
     elif query.data == "set_upload_destination_google_drive":
-        await db.set_upload_destination(user_id, "Google Drive")
+        await db.set_user_upload_destination(user_id, "Google Drive")
         await query.answer("Upload Destination set to Google Drive.")
     elif query.data == "set_upload_destination_gofile":
-        await db.set_upload_destination(user_id, "GoFile")
+        await db.set_user_upload_destination(user_id, "GoFile")
         await query.answer("Upload Destination set to GoFile.")
 
     # Refresh settings after changes
@@ -555,8 +555,8 @@ async def update_settings_buttons(query):
     gofile_api_key = await db.get_gofile_api_key(user_id)
     prefix = await db.get_user_prefix(user_id)
     caption = await db.get_user_caption(user_id)
-    upload_type = await db.get_upload_type(user_id)
-    upload_destination = await db.get_upload_destination(user_id)
+    upload_type = await db.get_user_upload_type(user_id)
+    upload_destination = await db.get_user_upload_destination(user_id)
 
     # Create buttons for each setting
     view_thumbnail_button = InlineKeyboardButton(
