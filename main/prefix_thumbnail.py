@@ -2,6 +2,7 @@ from pyrogram import Client, filters
 from helper.database import db
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
+from config import *
 
 @Client.on_message(filters.command("setthumbnail") & filters.private)
 async def set_thumbnail(bot, msg):
@@ -396,6 +397,15 @@ async def update_settings_buttons(query):
     except MessageNotModified:
         pass
 """
+
+@Client.on_message(filters.command("clear") & filters.user(ADMIN))
+async def clear_database_handler(client: Client, msg: Message):
+    try:
+        await db.clear_database()
+        await msg.reply_text("Database has been cleared✅.")
+    except Exception as e:
+        await msg.reply_text(f"An error occurred: {e}")
+        
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
