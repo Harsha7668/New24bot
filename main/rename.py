@@ -240,6 +240,65 @@ async def rename_file(bot, msg):
                         os.remove(output_file)
                     await sts.delete()
                 
+RENAME_ENABLED = True
 
+@Client.on_message(filters.command("renames") & filters.private)
+async def rename_file(bot, msg):
+    global RENAME_ENABLED
 
+    if not RENAME_ENABLED:
+        return await msg.reply_text("Rename feature is currently disabled.")
+        
+    user_id = msg.from_user.id
+    
+    if len(msg.command) < 2 or not msg.reply_to_message:
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
 
+    reply = msg.reply_to_message
+    media = reply.document or reply.audio or reply.video
+    if not media:
+        return await msg.reply_text("Please reply to a file, video, or audio with the new filename and extension (e.g., .mkv, .mp4, .zip).")
+
+    new_name = msg.text.split(" ", 1)[1]
+    sts = await msg.reply_text("🚀 Downloading... ⚡")
+    c_time = time.time()
+    downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+    filesize = humanbytes(media.file_size)
+
+    if CAPTION:
+        try:
+            cap = CAPTION.format(file_name=new_name, file_size=filesize)
+        except KeyError as e:
+            return await sts.edit(text=f"Caption error: unexpected keyword ({e})")
+    else:
+        cap = f"{new_name}\n\n🌟 Size: {filesize}"
+
+    # Retrieve thumbnail from the database
+    thumbnail_file_id = await db.get_thumbnail(msg.from_user.id)
+    og_thumbnail = None
+    if thumbnail_file_id:
+        try:
+            og_thumbnail = await bot.download_media(thumbnail_file_id)
+        except Exception:
+            pass
+    else:
+        if hasattr(media, 'thumbs') and media.thumbs:
+            try:
+                og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
+            except Exception:
+                pass
+
+    await sts.edit("💠 Uploading... ⚡")
+    c_time = time.time()
+
+    if os.path.getsize(downloaded) > FILE_SIZE_LIMIT:
+        file_link = await upload_to_google_drive(downloaded, new_name, sts)
+        await msg.reply_text(f"File uploaded to Google Drive!\n\n📁 **File Name:** {new_name}\n💾 **Size:** {filesize}\n🔗 **Link:** {file_link}")
+    else:
+        try:
+            await bot.send_document(msg.chat.id, document=downloaded, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+        except Exception as e:
+            return await sts.edit(f"Error: {e}")
+
+    os.remove(downloaded)
+    await sts.delete()
