@@ -76,7 +76,6 @@ async def set_metadata_command(client, msg):
     
     await msg.reply_text("Metadata titles set successfully ✅.")
 
-"""
 
 @Client.on_message(filters.command("uploadsettings") & filters.private)
 async def upload_settings(bot, msg):
@@ -106,7 +105,7 @@ async def upload_settings(bot, msg):
 async def handle_upload_settings_callback(bot, query):
     user_id = query.from_user.id
     
-    if query.data == "set_upload_document":
+    if query.data  "set_upload_document":
         await db.set_user_upload_type(user_id, "document")
         await query.answer("Upload type set to Document.", show_alert=True)
         
@@ -142,88 +141,4 @@ async def handle_upload_settings_callback(bot, query):
         except MessageNotModified:
             # Handle the case where the message content hasn't changed
             pass
-
-"""
-
-from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from pyrogram import Client, filters
-from pyrogram.errors import MessageNotModified
-
-# Settings command to display the user's current settings
-@Client.on_message(filters.private & filters.command("settings"))
-async def settings(bot, msg):
-    user_id = msg.from_user.id
-
-    # Fetch user settings from the database
-    custom_thumbnail = await db.get_thumbnail(user_id)
-    upload_type = await db.get_user_upload_type(user_id)
-    prefix = await db.get_user_prefix(user_id)
-    sample_video = await db.get_sample_video_status(user_id)
-    screenshot = await db.get_screenshot_status(user_id)
-
-    # Define status text
-    thumbnail_status = "Exists" if custom_thumbnail else "Not Exists"
-    prefix_status = prefix if prefix else "None"
-    sample_video_status = "Enabled" if sample_video else "Disabled"
-    screenshot_status = "Enabled" if screenshot else "Disabled"
-
-    # Create settings message
-    settings_text = f"""**Settings for {msg.from_user.first_name}**
-
-Custom Thumbnail: **{thumbnail_status}**
-Upload Type: **{upload_type.upper()}**
-Prefix: **{prefix_status}**
-
-Sample Video: **{sample_video_status}**
-Screenshot: **{screenshot_status}**
-"""
-
-    # Create inline keyboard buttons
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔄 Toggle Sample Video", callback_data="toggle_sample_video")],
-        [InlineKeyboardButton("🔄 Toggle Screenshot", callback_data="toggle_screenshot")],
-        [InlineKeyboardButton("📁 Change Upload Type", callback_data="change_upload_type")],
-        [InlineKeyboardButton("📸 Set Custom Thumbnail", callback_data="set_thumbnail")],
-        [InlineKeyboardButton("🔤 Set Prefix", callback_data="set_prefix")]
-    ])
-
-    await msg.reply_text(settings_text, reply_markup=keyboard)
-
-# Callback query handler
-@Client.on_callback_query(filters.regex("^toggle_sample_video$"))
-async def toggle_sample_video(bot, callback_query):
-    user_id = callback_query.from_user.id
-    current_status = await db.get_sample_video_status(user_id)
-    await db.update_sample_video_status(user_id, not current_status)
-    await callback_query.answer("Sample Video toggled!")
-    await settings(bot, callback_query.message)
-
-@Client.on_callback_query(filters.regex("^toggle_screenshot$"))
-async def toggle_screenshot(bot, callback_query):
-    user_id = callback_query.from_user.id
-    current_status = await db.get_screenshot_status(user_id)
-    await db.update_screenshot_status(user_id, not current_status)
-    await callback_query.answer("Screenshot toggled!")
-    await settings(bot, callback_query.message)
-
-@Client.on_callback_query(filters.regex("^change_upload_type$"))
-async def change_upload_type(bot, callback_query):
-    user_id = callback_query.from_user.id
-    user_upload_type = await db.get_user_upload_type(user_id)
-
-    # Toggle between document and video upload types
-    new_upload_type = "video" if user_upload_type == "document" else "document"
-    await db.set_user_upload_type(user_id, new_upload_type)
-    await callback_query.answer(f"Upload type changed to {new_upload_type.upper()}!")
-    await settings(bot, callback_query.message)
-
-@Client.on_callback_query(filters.regex("^set_thumbnail$"))
-async def set_thumbnail(bot, callback_query):
-    await callback_query.answer("Send me the thumbnail image you want to set.", show_alert=True)
-    # Handle the next incoming message as a photo to set as thumbnail
-
-@Client.on_callback_query(filters.regex("^set_prefix$"))
-async def set_prefix(bot, callback_query):
-    await callback_query.answer("Send me the prefix you want to set.", show_alert=True)
-    # Handle the next incoming message as text to set as prefix
 
