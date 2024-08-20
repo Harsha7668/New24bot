@@ -77,70 +77,6 @@ async def set_metadata_command(client, msg):
     await msg.reply_text("Metadata titles set successfully ✅.")
 
 
-@Client.on_message(filters.command("uploadsettings") & filters.private)
-async def upload_settings(bot, msg):
-    user_id = msg.from_user.id
-    # Fetch current preference
-    user_upload_type = await db.get_user_upload_type(user_id)
-    
-    # Define buttons based on current preference
-    document_button = InlineKeyboardButton(
-        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
-        callback_data="set_upload_document"
-    )
-    video_button = InlineKeyboardButton(
-        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
-        callback_data="set_upload_video"
-    )
-    
-    buttons = [[document_button], [video_button]]
-    
-    await msg.reply_text(
-        "Select your upload type:",
-        reply_markup=InlineKeyboardMarkup(buttons)
-    )
-
-
-@Client.on_callback_query()
-async def handle_upload_settings_callback(bot, query):
-    user_id = query.from_user.id
-    
-    if query.data  "set_upload_document":
-        await db.set_user_upload_type(user_id, "document")
-        await query.answer("Upload type set to Document.", show_alert=True)
-        
-    elif query.data == "set_upload_video":
-        await db.set_user_upload_type(user_id, "video")
-        await query.answer("Upload type set to Video.", show_alert=True)
-    
-    # Update message with the new button state
-    user_upload_type = await db.get_user_upload_type(user_id)
-    document_button = InlineKeyboardButton(
-        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
-        callback_data="set_upload_document"
-    )
-    video_button = InlineKeyboardButton(
-        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
-        callback_data="set_upload_video"
-    )
-    
-    buttons = [[document_button], [video_button]]
-    
-    # Only edit the message if there is a change
-    current_text = query.message.text
-    new_text = "Select your upload type:"
-    current_markup = query.message.reply_markup
-    new_markup = InlineKeyboardMarkup(buttons)
-    
-    if current_text != new_text or current_markup != new_markup:
-        try:
-            await query.message.edit_text(
-                new_text,
-                reply_markup=new_markup
-            )
-        except MessageNotModified:
-            # Handle the case where the message content hasn't changed
-            pass
 
 
 
@@ -162,7 +98,7 @@ async def gdrive_id(bot, msg):
 
 
 @Client.on_message(filters.private & filters.command("gofilesetup"))
-async def gofile_setup(bot, msg):
+async def gofile_setuppyrogram.types(bot, msg):
     user_id = msg.from_user.id
     command_parts = msg.text.split(" ", 1)
     
@@ -239,6 +175,72 @@ async def handle_upload_destinations_callback(bot, query):
     # Only edit the message if there is a change
     current_text = query.message.text
     new_text = "Select your upload destination:"
+    current_markup = query.message.reply_markup
+    new_markup = InlineKeyboardMarkup(buttons)
+    
+    if current_text != new_text or current_markup != new_markup:
+        try:
+            await query.message.edit_text(
+                new_text,
+                reply_markup=new_markup
+            )
+        except MessageNotModified:
+            # Handle the case where the message content hasn't changed
+            pass
+
+
+@Client.on_message(filters.command("uploadsettings") & filters.private)
+async def upload_settings(bot, msg):
+    user_id = msg.from_user.id
+    # Fetch current preference
+    user_upload_type = await db.get_user_upload_type(user_id)
+    
+    # Define buttons based on current preference
+    document_button = InlineKeyboardButton(
+        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
+        callback_data="set_upload_document"
+    )
+    video_button = InlineKeyboardButton(
+        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
+        callback_data="set_upload_video"
+    )
+    
+    buttons = [[document_button], [video_button]]
+    
+    await msg.reply_text(
+        "Select your upload type:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+
+@Client.on_callback_query()
+async def handle_upload_settings_callback(bot, query):
+    user_id = query.from_user.id
+    
+    if query.data == "set_upload_document":
+        await db.set_user_upload_type(user_id, "document")
+        await query.answer("Upload type set to Document.", show_alert=True)
+        
+    elif query.data == "set_upload_video":
+        await db.set_user_upload_type(user_id, "video")
+        await query.answer("Upload type set to Video.", show_alert=True)
+    
+    # Update message with the new button state
+    user_upload_type = await db.get_user_upload_type(user_id)
+    document_button = InlineKeyboardButton(
+        "📄 Upload as Document ✅" if user_upload_type == "document" else "📄 Upload as Document ❌",
+        callback_data="set_upload_document"
+    )
+    video_button = InlineKeyboardButton(
+        "📹 Upload as Video ✅" if user_upload_type == "video" else "📹 Upload as Video ❌",
+        callback_data="set_upload_video"
+    )
+    
+    buttons = [[document_button], [video_button]]
+    
+    # Only edit the message if there is a change
+    current_text = query.message.text
+    new_text = "Select your upload type:"
     current_markup = query.message.reply_markup
     new_markup = InlineKeyboardMarkup(buttons)
     
