@@ -563,7 +563,7 @@ def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption
         callback_data="view_upload_type"
     )
     view_upload_destination_button = InlineKeyboardButton(
-        f"Upload Destination: {upload_destination} {'✅' if upload_destination else ''}",
+        f"Upload Destination: {upload_destination if upload_destination in ['Telegram', 'Google Drive', 'GoFile'] else 'Not Set'} {'✅' if upload_destination else ''}",
         callback_data="view_upload_destination"
     )
 
