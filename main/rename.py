@@ -174,6 +174,7 @@ async def rename_file(bot, msg):
 """
 
 
+
 @Client.on_message(filters.private & filters.command("rename"))
 async def rename_file(bot, msg):
     if len(msg.command) < 2 or not msg.reply_to_message:
@@ -194,6 +195,8 @@ async def rename_file(bot, msg):
 
     # Fetch user upload settings
     user_upload_type = await db.get_user_upload_type(msg.from_user.id)
+    # Fetch user upload destination
+    user_destination = await db.get_user_upload_destination(msg.from_user.id)
 
     # Define upload settings based on user preference
     if user_upload_type == "document":
