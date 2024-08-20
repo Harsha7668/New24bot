@@ -38,15 +38,14 @@ class Database:
         """Store the Gofile API key for a user."""
         await self.gofile_col.update_one(
             {"user_id": user_id},
-            {"$set": {"api_key": api_key}},
+            {"$set": {"api_key": gofile_api_key}},
             upsert=True
         )
 
     async def get_gofile_api_key(self, user_id):
-        """Retrieve the Gofile API key for a user."""
-        doc = await self.gofile_col.find_one({"user_id": user_id})
-        return doc.get("api_key") if doc else None
-
+       user = await db.users_col.find_one({"user_id": user_id})
+       return user.get("gofile_api_key") if user else None
+        
     async def set_gdrive_folder_id(self, user_id, folder_id):
         """Store the Google Drive folder ID for a user."""
         await self.gdrive_col.update_one(
@@ -55,6 +54,7 @@ class Database:
             upsert=True
         )
 
+    
     async def get_gdrive_folder_id(self, user_id):
         """Retrieve the Google Drive folder ID for a user."""
         doc = await self.gdrive_col.find_one({"user_id": user_id})
