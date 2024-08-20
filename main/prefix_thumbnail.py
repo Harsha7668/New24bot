@@ -98,7 +98,7 @@ async def gdrive_id(bot, msg):
 
 
 @Client.on_message(filters.private & filters.command("gofilesetup"))
-async def gofile_setuppyrogram.types(bot, msg):
+async def gofile_setup(bot, msg):
     user_id = msg.from_user.id
     command_parts = msg.text.split(" ", 1)
     
