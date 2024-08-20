@@ -472,8 +472,8 @@ async def rename_file(bot, msg):
                     else:
                         await sts.edit(upload_result)
 
-                except Exception as e:
-                    await sts.edit(f"Error: {e}")
+                 except Exception as e:
+                     await sts.edit(f"Error: {e}")
 
             os.remove(downloaded)
             os.remove(output_file)
