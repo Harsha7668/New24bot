@@ -114,7 +114,7 @@ async def gofile_setup(bot, msg):
     
     await msg.reply_text("Gofile API key has been successfully set.")
 
-"""
+
 @Client.on_message(filters.command("uploaddestinations") & filters.private)
 async def upload_destinations(bot, msg):
     user_id = msg.from_user.id
@@ -256,8 +256,8 @@ async def handle_upload_settings_callback(bot, query):
         except MessageNotModified:
             # Handle the case where the message content hasn't changed
             pass
-"""
-"""
+
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -397,8 +397,8 @@ async def update_settings_buttons(query):
         await query.message.edit_reply_markup(InlineKeyboardMarkup(buttons))
     except MessageNotModified:
         pass
-"""
 
+"""
 @Client.on_message(filters.command("clear") & filters.user(ADMIN))
 async def clear_database_handler(client: Client, msg: Message):
     try:
@@ -596,3 +596,4 @@ def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption
     ]
 
     return buttons
+"""
