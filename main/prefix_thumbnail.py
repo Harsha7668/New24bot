@@ -76,7 +76,7 @@ async def set_metadata_command(client, msg):
     
     await msg.reply_text("Metadata titles set successfully ✅.")
 
-
+"""
 
 @Client.on_message(filters.command("uploadsettings") & filters.private)
 async def upload_settings(bot, msg):
@@ -143,10 +143,13 @@ async def handle_upload_settings_callback(bot, query):
             # Handle the case where the message content hasn't changed
             pass
 
-
+"""
 
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from pyrogram import Client, filters
+from pyrogram.errors import MessageNotModified
 
+# Settings command to display the user's current settings
 @Client.on_message(filters.private & filters.command("settings"))
 async def settings(bot, msg):
     user_id = msg.from_user.id
@@ -186,7 +189,8 @@ Screenshot: **{screenshot_status}**
 
     await msg.reply_text(settings_text, reply_markup=keyboard)
 
-@Client.on_callback_query(filters.regex("toggle_sample_video"))
+# Callback query handler
+@Client.on_callback_query(filters.regex("^toggle_sample_video$"))
 async def toggle_sample_video(bot, callback_query):
     user_id = callback_query.from_user.id
     current_status = await db.get_sample_video_status(user_id)
@@ -194,10 +198,32 @@ async def toggle_sample_video(bot, callback_query):
     await callback_query.answer("Sample Video toggled!")
     await settings(bot, callback_query.message)
 
-@Client.on_callback_query(filters.regex("toggle_screenshot"))
+@Client.on_callback_query(filters.regex("^toggle_screenshot$"))
 async def toggle_screenshot(bot, callback_query):
     user_id = callback_query.from_user.id
     current_status = await db.get_screenshot_status(user_id)
     await db.update_screenshot_status(user_id, not current_status)
     await callback_query.answer("Screenshot toggled!")
     await settings(bot, callback_query.message)
+
+@Client.on_callback_query(filters.regex("^change_upload_type$"))
+async def change_upload_type(bot, callback_query):
+    user_id = callback_query.from_user.id
+    user_upload_type = await db.get_user_upload_type(user_id)
+
+    # Toggle between document and video upload types
+    new_upload_type = "video" if user_upload_type == "document" else "document"
+    await db.set_user_upload_type(user_id, new_upload_type)
+    await callback_query.answer(f"Upload type changed to {new_upload_type.upper()}!")
+    await settings(bot, callback_query.message)
+
+@Client.on_callback_query(filters.regex("^set_thumbnail$"))
+async def set_thumbnail(bot, callback_query):
+    await callback_query.answer("Send me the thumbnail image you want to set.", show_alert=True)
+    # Handle the next incoming message as a photo to set as thumbnail
+
+@Client.on_callback_query(filters.regex("^set_prefix$"))
+async def set_prefix(bot, callback_query):
+    await callback_query.answer("Send me the prefix you want to set.", show_alert=True)
+    # Handle the next incoming message as text to set as prefix
+
