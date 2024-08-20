@@ -508,7 +508,7 @@ async def handle_settings_callback(bot, query):
 
     elif data.startswith("set_upload_destination_"):
         upload_destination = data.split("_")[-1].lower()  # Changed to lowercase
-        valid_destinations = ['telegram', 'google_drive', 'gofile']
+        valid_destinations = ['telegram', 'gdrive', 'gofile']
         if upload_destination in valid_destinations:
             await db.set_user_upload_destination(user_id, upload_destination)
             await query.answer(f"Upload Destination set to {upload_destination.replace('_', ' ').title()}.")
