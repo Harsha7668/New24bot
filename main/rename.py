@@ -562,7 +562,7 @@ async def rename_file(bot, msg):
                 try:
                     gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
                     if not gofile_api_key:
-                        return await sts.edit("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                        return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
                 
                     upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
                     if "http" in upload_result:
