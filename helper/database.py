@@ -16,7 +16,7 @@ class Database:
         self.gofile_col = self.db['gofile']
         self.gdrive_col = self.db['gdrive']
 
-    async def set_upload_destination(self, user_id, destination):
+    async def set_user_upload_destination(self, user_id, destination):
         """Set the upload destination for a user."""
         await self.upload_destinations_col.update_one(
             {"user_id": user_id},
@@ -24,7 +24,7 @@ class Database:
             upsert=True
         )
 
-    async def get_upload_destination(self, user_id):
+    async def get_user_upload_destination(self, user_id):
         """Get the upload destination for a user."""
         doc = await self.upload_destinations_col.find_one({"user_id": user_id})
         return doc.get("destination") if doc else None
