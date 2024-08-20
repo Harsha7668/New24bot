@@ -461,11 +461,19 @@ async def rename_file(bot, msg):
                 except Exception as e:
                     await msg.reply_text(f"Error: {e}")
             elif user_destination == "gofile":
-                try:
-                    download_url = await gofile_upload(bot, msg)
-                    await msg.reply_text(f"Upload successful!\nDownload link: {download_url}")
+                 try:
+                    gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                    if not gofile_api_key:
+                        return await sts.edit("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                
+                    upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                    if "http" in upload_result:
+                        await sts.edit(f"Upload successful!\nDownload link: {upload_result}")
+                    else:
+                        await sts.edit(upload_result)
+
                 except Exception as e:
-                    return await msg.reply_text(f"Error: {e}")
+                    await sts.edit(f"Error: {e}")
 
             os.remove(downloaded)
             os.remove(output_file)
@@ -552,13 +560,30 @@ async def rename_file(bot, msg):
                     await msg.reply_text(f"Error: {e}")
             elif user_destination == "gofile":
                 try:
-                    download_url = await gofile_upload(bot, msg)
-                    await msg.reply_text(f"Upload successful!\nDownload link: {download_url}")
-                except Exception as e:
-                    return await msg.reply_text(f"Error: {e}")
+                    gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                    if not gofile_api_key:
+                        return await sts.edit("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                
+                    upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                    if "http" in upload_result:
+                        await sts.edit(f"Upload successful!\nDownload link: {upload_result}")
+                    else:
+                        await sts.edit(upload_result)
 
-            os.remove(downloaded)
-            os.remove(output_file)
+                except Exception as e:
+                    await sts.edit(f"Error: {e}")
+
+                finally:
+                    if os.path.exists(downloaded):
+                        os.remove(downloaded)
+                    if os.path.exists(output_file):
+                        os.remove(output_file)
+
             await sts.delete()
-        else:
-            await msg.reply_text("Error: The file is not a video.")
+       else:
+            await msg.reply_text("Error: Unsupported upload type.")
+
+
+
+
+
