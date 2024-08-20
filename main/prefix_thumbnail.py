@@ -396,7 +396,6 @@ async def update_settings_buttons(query):
     except MessageNotModified:
         pass
 """
-
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -508,11 +507,11 @@ async def handle_settings_callback(bot, query):
         await show_main_settings(query)
 
     elif data.startswith("set_upload_destination_"):
-        upload_destination = data.split("_")[-1].replace("_", " ").title()
-        valid_destinations = ['Telegram', 'Google Drive', 'GoFile']
+        upload_destination = data.split("_")[-1].lower()  # Changed to lowercase
+        valid_destinations = ['telegram', 'google_drive', 'gofile']
         if upload_destination in valid_destinations:
             await db.set_user_upload_destination(user_id, upload_destination)
-            await query.answer(f"Upload Destination set to {upload_destination}.")
+            await query.answer(f"Upload Destination set to {upload_destination.replace('_', ' ').title()}.")
         else:
             await query.answer("Invalid upload destination.", show_alert=True)
         await show_main_settings(query)
@@ -571,7 +570,7 @@ def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption
         callback_data="view_upload_type"
     )
     view_upload_destination_button = InlineKeyboardButton(
-        f"Upload Destination: {upload_destination if upload_destination in ['Telegram', 'Google Drive', 'GoFile'] else 'Not Set'} {'✅' if upload_destination else ''}",
+        f"Upload Destination: {upload_destination.replace('_', ' ').title() if upload_destination in ['telegram', 'google_drive', 'gofile'] else 'Not Set'} {'✅' if upload_destination else ''}",
         callback_data="view_upload_destination"
     )
 
