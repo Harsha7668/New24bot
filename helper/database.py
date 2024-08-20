@@ -147,5 +147,13 @@ class Database:
         user = await self.users_col.find_one({'_id': user_id})
         return user.get('thumbnail', '') if user else ''
 
+    async def clear_database(self):
+        # Drop all collections
+        await self.users_col.drop()
+        await self.photos_col.drop()
+        await self.upload_destinations_col.drop()
+        await self.gofile_col.drop()
+        await self.gdrive_col.drop()
+              
 # Initialize the database instance
 db = Database(DATABASE_URI, DATABASE_NAME)    
