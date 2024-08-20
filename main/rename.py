@@ -365,7 +365,11 @@ async def rename_file(bot, msg):
     if reply.document or reply.video:
         sts = await msg.reply_text("🚀 Downloading... ⚡")
         c_time = time.time()
-        downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+        try:
+            downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+        except Exception as e:
+            return await sts.edit(text=f"Error downloading file: {e}")
+
         filesize = humanbytes(media.file_size)
 
         # Retrieve metadata titles
@@ -396,14 +400,14 @@ async def rename_file(bot, msg):
         if thumbnail_file_id:
             try:
                 og_thumbnail = await bot.download_media(thumbnail_file_id)
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"Error downloading thumbnail: {e}")
         else:
             if hasattr(media, 'thumbs') and media.thumbs:
                 try:
                     og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
-                except Exception:
-                    pass
+                except Exception as e:
+                    print(f"Error downloading media thumbnail: {e}")
 
         # Change metadata if applicable
         output_file = f"{new_name}"
