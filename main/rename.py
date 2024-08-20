@@ -417,60 +417,59 @@ async def rename_file(bot, msg):
 
         # Upload the file based on user upload settings
         try:
-            if user_destination == "telegram":
-                if user_upload_type == "document":
+            if user_upload_type == "document":
+                if user_destination == "telegram":
                     await bot.send_document(msg.chat.id, document=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                
                 elif user_destination == "gdrive":
-                file_link = await upload_to_google_drive(output_file, new_name, sts)
-                if file_link:
-                    await msg.reply_text(
-                        f"File uploaded to Google Drive!\n\n"
-                        f"📁 **File Name:** {new_name}\n"
-                        f"💾 **Size:** {filesize}\n"
-                        f"🔗 **Link:** [View File]({file_link})"
-                    )
-                else:
-                    await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                    file_link = await upload_to_google_drive(output_file, new_name, sts)
+                    if file_link:
+                        await msg.reply_text(
+                            f"File uploaded to Google Drive!\n\n"
+                            f"📁 **File Name:** {new_name}\n"
+                            f"💾 **Size:** {filesize}\n"
+                            f"🔗 **Link:** [View File]({file_link})"
+                        )
+                    else:
+                        await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
 
-            elif user_destination == "gofile":
-                gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
-                if not gofile_api_key:
-                    return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
+                elif user_destination == "gofile":
+                    gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                    if not gofile_api_key:
+                        return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
 
-                upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
-                if "http" in upload_result:
-                    await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
-                else:
-                    await msg.reply_text(upload_result)
+                    upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                    if "http" in upload_result:
+                        await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
+                    else:
+                        await msg.reply_text(upload_result)
 
-        except Exception as e:
-            await msg.reply_text(f"Error: {e}")
-            
-                elif user_upload_type == "video":
+            elif user_upload_type == "video":
+                if user_destination == "telegram":
                     await bot.send_video(msg.chat.id, video=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                
+                elif user_destination == "gdrive":
+                    file_link = await upload_to_google_drive(output_file, new_name, sts)
+                    if file_link:
+                        await msg.reply_text(
+                            f"File uploaded to Google Drive!\n\n"
+                            f"📁 **File Name:** {new_name}\n"
+                            f"💾 **Size:** {filesize}\n"
+                            f"🔗 **Link:** [View File]({file_link})"
+                        )
+                    else:
+                        await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
 
-            elif user_destination == "gdrive":
-                file_link = await upload_to_google_drive(output_file, new_name, sts)
-                if file_link:
-                    await msg.reply_text(
-                        f"File uploaded to Google Drive!\n\n"
-                        f"📁 **File Name:** {new_name}\n"
-                        f"💾 **Size:** {filesize}\n"
-                        f"🔗 **Link:** [View File]({file_link})"
-                    )
-                else:
-                    await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                elif user_destination == "gofile":
+                    gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
+                    if not gofile_api_key:
+                        return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
 
-            elif user_destination == "gofile":
-                gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
-                if not gofile_api_key:
-                    return await msg.reply_text("Gofile API key is not set. Use /gofilesetup {your_api_key} to set it.")
-
-                upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
-                if "http" in upload_result:
-                    await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
-                else:
-                    await msg.reply_text(upload_result)
+                    upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
+                    if "http" in upload_result:
+                        await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
+                    else:
+                        await msg.reply_text(upload_result)
 
         except Exception as e:
             await msg.reply_text(f"Error: {e}")
@@ -480,4 +479,4 @@ async def rename_file(bot, msg):
                 os.remove(downloaded)
             if os.path.exists(output_file):
                 os.remove(output_file)
-            await sts.delete()                  
+            await sts.delete()
