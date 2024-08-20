@@ -427,87 +427,7 @@ async def handle_settings_callback(bot, query):
     user_id = query.from_user.id
     data = query.data
 
-    if data == "view_thumbnail":
-        thumbnail = await db.get_thumbnail(user_id)
-        if thumbnail:
-            await bot.send_photo(query.message.chat.id, photo=thumbnail, caption="Here is your current thumbnail.")
-        else:
-            await query.answer("No thumbnail set.", show_alert=True)
-        await show_main_settings(query)
-
-    elif data == "view_metadata":
-        metadata = await db.get_metadata_titles(user_id)
-        if metadata:
-            video_title, audio_title, subtitle_title = metadata
-            metadata_text = f"**Video Title:** {video_title}\n**Audio Title:** {audio_title}\n**Subtitle Title:** {subtitle_title}"
-            await query.message.edit_text(
-                metadata_text,
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
-            )
-        else:
-            await query.answer("No metadata set.", show_alert=True)
-
-    elif data == "view_gofile_api_key":
-        gofile_api_key = await db.get_gofile_api_key(user_id)
-        if gofile_api_key:
-            await query.message.edit_text(
-                f"**GoFile API Key:** {gofile_api_key}",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
-            )
-        else:
-            await query.answer("No GoFile API key set.", show_alert=True)
-
-    elif data == "view_prefix":
-        prefix = await db.get_user_prefix(user_id)
-        if prefix:
-            await query.message.edit_text(
-                f"**Prefix:** {prefix}",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
-            )
-        else:
-            await query.answer("No prefix set.", show_alert=True)
-
-    elif data == "view_caption":
-        caption = await db.get_user_caption(user_id)
-        if caption:
-            await query.message.edit_text(
-                f"**Caption Template:**\n{caption}",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
-            )
-        else:
-            await query.answer("No caption template set.", show_alert=True)
-
-    elif data == "view_upload_type":
-        await query.message.edit_text(
-            "Choose Upload Type:",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Document", callback_data="set_upload_type_document")],
-                [InlineKeyboardButton("Video", callback_data="set_upload_type_video")],
-                [InlineKeyboardButton("Back", callback_data="back_to_settings")]
-            ])
-        )
-
-    elif data == "view_upload_destination":
-        await query.message.edit_text(
-            "Choose Upload Destination:",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("Telegram", callback_data="set_upload_destination_telegram")],
-                [InlineKeyboardButton("Google Drive", callback_data="set_upload_destination_google_drive")],
-                [InlineKeyboardButton("GoFile", callback_data="set_upload_destination_gofile")],
-                [InlineKeyboardButton("Back", callback_data="back_to_settings")]
-            ])
-        )
-
-    elif data.startswith("set_upload_type_"):
-        upload_type = data.split("_")[-1].capitalize()
-        if upload_type in ["Document", "Video"]:
-            await db.set_user_upload_type(user_id, upload_type)
-            await query.answer(f"Upload Type set to {upload_type}.")
-        else:
-            await query.answer("Invalid upload type selected.", show_alert=True)
-        await show_main_settings(query)
-
-    elif data.startswith("set_upload_destination_"):
+    if data.startswith("set_upload_destination_"):
         upload_destination = data.split("_")[-1].replace("_", " ").title()
         valid_destinations = ['Telegram', 'Google Drive', 'GoFile']
         if upload_destination in valid_destinations:
@@ -515,9 +435,6 @@ async def handle_settings_callback(bot, query):
             await query.answer(f"Upload Destination set to {upload_destination}.")
         else:
             await query.answer("Invalid upload destination.", show_alert=True)
-        await show_main_settings(query)
-
-    elif data == "back_to_settings":
         await show_main_settings(query)
 
 async def show_main_settings(query):
