@@ -396,7 +396,6 @@ async def update_settings_buttons(query):
     except MessageNotModified:
         pass
 """
-
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -520,10 +519,11 @@ async def handle_settings_callback(bot, query):
             ])
         )
 
-    # Ensure buttons are updated after any action
-    await update_settings_buttons(query)
+    # Avoid updating the buttons here to prevent going back
+    # Update buttons only when necessary
+    # await update_settings_buttons(query)
 
-@Client.on_callback_query()
+@Client.on_callback_query(filters.regex(r"^set_upload_type_|^set_upload_destination_"))
 async def set_upload_preference(bot, query):
     user_id = query.from_user.id
 
@@ -543,7 +543,7 @@ async def set_upload_preference(bot, query):
         await db.set_user_upload_destination(user_id, "GoFile")
         await query.answer("Upload Destination set to GoFile.")
 
-    # Refresh settings after changes
+    # Go back to the updated settings after the selection
     await update_settings_buttons(query)
 
 async def update_settings_buttons(query):
