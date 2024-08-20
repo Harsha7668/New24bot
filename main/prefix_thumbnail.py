@@ -396,6 +396,7 @@ async def update_settings_buttons(query):
     except MessageNotModified:
         pass
 """
+
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.errors import MessageNotModified
@@ -414,46 +415,8 @@ async def settings(bot, msg):
     upload_destination = await db.get_user_upload_destination(user_id)
 
     # Create buttons for each setting
-    view_thumbnail_button = InlineKeyboardButton(
-        "View Thumbnail" if thumbnail else "Thumbnail ❌",
-        callback_data="view_thumbnail"
-    )
-    view_metadata_button = InlineKeyboardButton(
-        "View Metadata" if metadata else "Metadata ❌",
-        callback_data="view_metadata"
-    )
-    view_gofile_api_key_button = InlineKeyboardButton(
-        "View GoFile API Key" if gofile_api_key else "GoFile API Key ❌",
-        callback_data="view_gofile_api_key"
-    )
-    view_prefix_button = InlineKeyboardButton(
-        "View Prefix" if prefix else "Prefix ❌",
-        callback_data="view_prefix"
-    )
-    view_caption_button = InlineKeyboardButton(
-        "View Caption" if caption else "Caption ❌",
-        callback_data="view_caption"
-    )
-    view_upload_type_button = InlineKeyboardButton(
-        f"Upload Type: {upload_type or 'Not Set'}",
-        callback_data="view_upload_type"
-    )
-    view_upload_destination_button = InlineKeyboardButton(
-        f"Upload Destination: {upload_destination or 'Not Set'}",
-        callback_data="view_upload_destination"
-    )
-
-    # Arrange buttons in a grid
-    buttons = [
-        [view_thumbnail_button],
-        [view_metadata_button],
-        [view_gofile_api_key_button],
-        [view_prefix_button],
-        [view_caption_button],
-        [view_upload_type_button],
-        [view_upload_destination_button],
-    ]
-
+    buttons = create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption, upload_type, upload_destination)
+    
     await msg.reply_text(
         "Your Settings:",
         reply_markup=InlineKeyboardMarkup(buttons)
@@ -462,91 +425,95 @@ async def settings(bot, msg):
 @Client.on_callback_query()
 async def handle_settings_callback(bot, query):
     user_id = query.from_user.id
+    data = query.data
 
-    if query.data == "view_thumbnail":
+    if data == "view_thumbnail":
         thumbnail = await db.get_thumbnail(user_id)
         if thumbnail:
             await bot.send_photo(query.message.chat.id, photo=thumbnail, caption="Here is your current thumbnail.")
         else:
             await query.answer("No thumbnail set.", show_alert=True)
+        await show_main_settings(query)
 
-    elif query.data == "view_metadata":
+    elif data == "view_metadata":
         metadata = await db.get_metadata_titles(user_id)
         if metadata:
             video_title, audio_title, subtitle_title = metadata
             metadata_text = f"**Video Title:** {video_title}\n**Audio Title:** {audio_title}\n**Subtitle Title:** {subtitle_title}"
-            await query.message.edit_text(metadata_text)
+            await query.message.edit_text(
+                metadata_text,
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
+            )
         else:
             await query.answer("No metadata set.", show_alert=True)
 
-    elif query.data == "view_gofile_api_key":
+    elif data == "view_gofile_api_key":
         gofile_api_key = await db.get_gofile_api_key(user_id)
         if gofile_api_key:
-            await query.message.edit_text(f"**GoFile API Key:** {gofile_api_key}")
+            await query.message.edit_text(
+                f"**GoFile API Key:** {gofile_api_key}",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
+            )
         else:
             await query.answer("No GoFile API key set.", show_alert=True)
 
-    elif query.data == "view_prefix":
+    elif data == "view_prefix":
         prefix = await db.get_user_prefix(user_id)
         if prefix:
-            await query.message.edit_text(f"**Prefix:** {prefix}")
+            await query.message.edit_text(
+                f"**Prefix:** {prefix}",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
+            )
         else:
             await query.answer("No prefix set.", show_alert=True)
 
-    elif query.data == "view_caption":
+    elif data == "view_caption":
         caption = await db.get_user_caption(user_id)
         if caption:
-            await query.message.edit_text(f"**Caption Template:**\n{caption}")
+            await query.message.edit_text(
+                f"**Caption Template:**\n{caption}",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Back", callback_data="back_to_settings")]])
+            )
         else:
             await query.answer("No caption template set.", show_alert=True)
 
-    elif query.data == "view_upload_type":
+    elif data == "view_upload_type":
         await query.message.edit_text(
             "Choose Upload Type:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Document", callback_data="set_upload_type_document")],
-                [InlineKeyboardButton("Video", callback_data="set_upload_type_video")]
+                [InlineKeyboardButton("Video", callback_data="set_upload_type_video")],
+                [InlineKeyboardButton("Back", callback_data="back_to_settings")]
             ])
         )
 
-    elif query.data == "view_upload_destination":
+    elif data == "view_upload_destination":
         await query.message.edit_text(
             "Choose Upload Destination:",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("Telegram", callback_data="set_upload_destination_telegram")],
                 [InlineKeyboardButton("Google Drive", callback_data="set_upload_destination_google_drive")],
-                [InlineKeyboardButton("GoFile", callback_data="set_upload_destination_gofile")]
+                [InlineKeyboardButton("GoFile", callback_data="set_upload_destination_gofile")],
+                [InlineKeyboardButton("Back", callback_data="back_to_settings")]
             ])
         )
 
-    # Avoid updating the buttons here to prevent going back
-    # Update buttons only when necessary
-    # await update_settings_buttons(query)
+    elif data.startswith("set_upload_type_"):
+        upload_type = data.split("_")[-1].capitalize()
+        await db.set_user_upload_type(user_id, upload_type)
+        await query.answer(f"Upload Type set to {upload_type}.")
+        await update_settings_buttons(query)
 
-@Client.on_callback_query(filters.regex(r"^set_upload_type_|^set_upload_destination_"))
-async def set_upload_preference(bot, query):
-    user_id = query.from_user.id
+    elif data.startswith("set_upload_destination_"):
+        upload_destination = data.split("_")[-1].replace("_", " ").title()
+        await db.set_user_upload_destination(user_id, upload_destination)
+        await query.answer(f"Upload Destination set to {upload_destination}.")
+        await update_settings_buttons(query)
 
-    if query.data == "set_upload_type_document":
-        await db.set_user_upload_type(user_id, "Document")
-        await query.answer("Upload Type set to Document.")
-    elif query.data == "set_upload_type_video":
-        await db.set_user_upload_type(user_id, "Video")
-        await query.answer("Upload Type set to Video.")
-    elif query.data == "set_upload_destination_telegram":
-        await db.set_user_upload_destination(user_id, "Telegram")
-        await query.answer("Upload Destination set to Telegram.")
-    elif query.data == "set_upload_destination_google_drive":
-        await db.set_user_upload_destination(user_id, "Google Drive")
-        await query.answer("Upload Destination set to Google Drive.")
-    elif query.data == "set_upload_destination_gofile":
-        await db.set_user_upload_destination(user_id, "GoFile")
-        await query.answer("Upload Destination set to GoFile.")
+    elif data == "back_to_settings":
+        await show_main_settings(query)
 
-    # Go back to the updated settings after the selection
-    await update_settings_buttons(query)
-
-async def update_settings_buttons(query):
+async def show_main_settings(query):
     user_id = query.from_user.id
 
     # Re-fetch the settings to ensure buttons are updated correctly
@@ -559,6 +526,18 @@ async def update_settings_buttons(query):
     upload_destination = await db.get_user_upload_destination(user_id)
 
     # Create buttons for each setting
+    buttons = create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption, upload_type, upload_destination)
+
+    try:
+        await query.message.edit_text(
+            "Your Settings:",
+            reply_markup=InlineKeyboardMarkup(buttons)
+        )
+    except MessageNotModified:
+        pass
+
+def create_settings_buttons(thumbnail, metadata, gofile_api_key, prefix, caption, upload_type, upload_destination):
+    # Create buttons for each setting with ticks for selected options
     view_thumbnail_button = InlineKeyboardButton(
         "View Thumbnail" if thumbnail else "Thumbnail ❌",
         callback_data="view_thumbnail"
@@ -580,11 +559,11 @@ async def update_settings_buttons(query):
         callback_data="view_caption"
     )
     view_upload_type_button = InlineKeyboardButton(
-        f"Upload Type: {upload_type or 'Not Set'}",
+        f"Upload Type: {'Document' if upload_type == 'Document' else 'Video'} {'✅' if upload_type else ''}",
         callback_data="view_upload_type"
     )
     view_upload_destination_button = InlineKeyboardButton(
-        f"Upload Destination: {upload_destination or 'Not Set'}",
+        f"Upload Destination: {upload_destination} {'✅' if upload_destination else ''}",
         callback_data="view_upload_destination"
     )
 
@@ -598,7 +577,4 @@ async def update_settings_buttons(query):
         [view_upload_destination_button],
     ]
 
-    try:
-        await query.message.edit_reply_markup(InlineKeyboardMarkup(buttons))
-    except MessageNotModified:
-        pass
+    return buttons
