@@ -339,7 +339,6 @@ async def rename_file(bot, msg):
 """
 
 
-
 @Client.on_message(filters.private & filters.command("rename"))
 async def rename_file(bot, msg):
     if len(msg.command) < 2 or not msg.reply_to_message:
@@ -365,8 +364,10 @@ async def rename_file(bot, msg):
     if reply.document or reply.video:
         sts = await msg.reply_text("🚀 Downloading... ⚡")
         c_time = time.time()
+
         try:
             downloaded = await reply.download(file_name=new_name, progress=progress_message, progress_args=("🚀 Download Started... ⚡️", sts, c_time))
+            print(f"Downloaded file: {downloaded}")  # Debugging line
         except Exception as e:
             return await sts.edit(text=f"Error downloading file: {e}")
 
@@ -400,12 +401,14 @@ async def rename_file(bot, msg):
         if thumbnail_file_id:
             try:
                 og_thumbnail = await bot.download_media(thumbnail_file_id)
+                print(f"Downloaded thumbnail: {og_thumbnail}")  # Debugging line
             except Exception as e:
                 print(f"Error downloading thumbnail: {e}")
         else:
             if hasattr(media, 'thumbs') and media.thumbs:
                 try:
                     og_thumbnail = await bot.download_media(media.thumbs[0].file_id)
+                    print(f"Downloaded media thumbnail: {og_thumbnail}")  # Debugging line
                 except Exception as e:
                     print(f"Error downloading media thumbnail: {e}")
 
@@ -414,16 +417,22 @@ async def rename_file(bot, msg):
         await safe_edit_message(sts, "💠 Changing metadata... ⚡")
         try:
             change_video_metadata(downloaded, video_title, audio_title, subtitle_title, output_file)
+            print(f"Metadata changed, output file: {output_file}")  # Debugging line
         except Exception as e:
             await safe_edit_message(sts, f"Error changing metadata: {e}")
             os.remove(downloaded)
             return
+
+        # Verify that output file exists
+        if not os.path.exists(output_file):
+            return await sts.edit(text="Error: Output file not found after metadata change.")
 
         # Upload the file based on user upload settings
         try:
             if user_upload_type == "document":
                 if user_destination == "telegram":
                     await bot.send_document(msg.chat.id, document=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                    print(f"File uploaded to Telegram as document: {output_file}")  # Debugging line
                 
                 elif user_destination == "gdrive":
                     file_link = await upload_to_google_drive(output_file, new_name, sts)
@@ -436,6 +445,7 @@ async def rename_file(bot, msg):
                         )
                     else:
                         await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                    print(f"File uploaded to Google Drive: {output_file}")  # Debugging line
 
                 elif user_destination == "gofile":
                     gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
@@ -447,10 +457,12 @@ async def rename_file(bot, msg):
                         await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
                     else:
                         await msg.reply_text(upload_result)
+                    print(f"File uploaded to GoFile: {output_file}")  # Debugging line
 
             elif user_upload_type == "video":
                 if user_destination == "telegram":
                     await bot.send_video(msg.chat.id, video=output_file, thumb=og_thumbnail, caption=cap, progress=progress_message, progress_args=("💠 Upload Started... ⚡", sts, c_time))
+                    print(f"File uploaded to Telegram as video: {output_file}")  # Debugging line
                 
                 elif user_destination == "gdrive":
                     file_link = await upload_to_google_drive(output_file, new_name, sts)
@@ -463,6 +475,7 @@ async def rename_file(bot, msg):
                         )
                     else:
                         await msg.reply_text("Error: Unable to retrieve the Google Drive link.")
+                    print(f"File uploaded to Google Drive: {output_file}")  # Debugging line
 
                 elif user_destination == "gofile":
                     gofile_api_key = await db.get_gofile_api_key(msg.from_user.id)
@@ -474,6 +487,7 @@ async def rename_file(bot, msg):
                         await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
                     else:
                         await msg.reply_text(upload_result)
+                    print(f"File uploaded to GoFile: {output_file}")  # Debugging line
 
         except Exception as e:
             await msg.reply_text(f"Error: {e}")
