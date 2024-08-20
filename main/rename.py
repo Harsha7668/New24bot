@@ -5,6 +5,9 @@ from main.utils import progress_message, humanbytes
 from helper.ffmpeg import change_video_metadata
 from helper.database import db
 from pyrogram.types import Document, Video
+from googleapiclient.http import MediaFileUpload
+from main.gdrive import upload_to_google_drive, drive_service
+from googleapiclient.errors import HttpError
 
 async def safe_edit_message(message, new_text):
     try:
