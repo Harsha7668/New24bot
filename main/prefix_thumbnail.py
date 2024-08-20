@@ -112,6 +112,7 @@ async def gofile_setup(bot, msg):
     
     await msg.reply_text("Gofile API key has been successfully set.")
 
+"""
 @Client.on_message(filters.command("uploaddestinations") & filters.private)
 async def upload_destinations(bot, msg):
     user_id = msg.from_user.id
@@ -253,3 +254,144 @@ async def handle_upload_settings_callback(bot, query):
         except MessageNotModified:
             # Handle the case where the message content hasn't changed
             pass
+"""
+
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.errors import MessageNotModified
+
+@Client.on_message(filters.command("settings") & filters.private)
+async def settings(bot, msg):
+    user_id = msg.from_user.id
+
+    # Retrieve user settings from the database
+    thumbnail = await db.get_thumbnail(user_id)
+    metadata = await db.get_metadata_titles(user_id)
+    gofile_api_key = await db.get_gofile_api_key(user_id)
+    prefix = await db.get_user_prefix(user_id)
+    caption = await db.get_user_caption(user_id)
+
+    # Create buttons for each setting
+    view_thumbnail_button = InlineKeyboardButton(
+        "View Thumbnail" if thumbnail else "Thumbnail ❌",
+        callback_data="view_thumbnail"
+    )
+    view_metadata_button = InlineKeyboardButton(
+        "View Metadata" if metadata else "Metadata ❌",
+        callback_data="view_metadata"
+    )
+    view_gofile_api_key_button = InlineKeyboardButton(
+        "View GoFile API Key" if gofile_api_key else "GoFile API Key ❌",
+        callback_data="view_gofile_api_key"
+    )
+    view_prefix_button = InlineKeyboardButton(
+        "View Prefix" if prefix else "Prefix ❌",
+        callback_data="view_prefix"
+    )
+    view_caption_button = InlineKeyboardButton(
+        "View Caption" if caption else "Caption ❌",
+        callback_data="view_caption"
+    )
+
+    # Arrange buttons in a grid
+    buttons = [
+        [view_thumbnail_button],
+        [view_metadata_button],
+        [view_gofile_api_key_button],
+        [view_prefix_button],
+        [view_caption_button],
+    ]
+
+    await msg.reply_text(
+        "Your Settings:",
+        reply_markup=InlineKeyboardMarkup(buttons)
+    )
+
+@Client.on_callback_query()
+async def handle_settings_callback(bot, query):
+    user_id = query.from_user.id
+
+    if query.data == "view_thumbnail":
+        thumbnail = await db.get_thumbnail(user_id)
+        if thumbnail:
+            await bot.send_photo(query.message.chat.id, photo=thumbnail, caption="Here is your current thumbnail.")
+        else:
+            await query.answer("No thumbnail set.", show_alert=True)
+
+    elif query.data == "view_metadata":
+        metadata = await db.get_metadata_titles(user_id)
+        if metadata:
+            video_title, audio_title, subtitle_title = metadata
+            metadata_text = f"**Video Title:** {video_title}\n**Audio Title:** {audio_title}\n**Subtitle Title:** {subtitle_title}"
+            await query.message.edit_text(metadata_text)
+        else:
+            await query.answer("No metadata set.", show_alert=True)
+
+    elif query.data == "view_gofile_api_key":
+        gofile_api_key = await db.get_gofile_api_key(user_id)
+        if gofile_api_key:
+            await query.message.edit_text(f"**GoFile API Key:** {gofile_api_key}")
+        else:
+            await query.answer("No GoFile API key set.", show_alert=True)
+
+    elif query.data == "view_prefix":
+        prefix = await db.get_user_prefix(user_id)
+        if prefix:
+            await query.message.edit_text(f"**Prefix:** {prefix}")
+        else:
+            await query.answer("No prefix set.", show_alert=True)
+
+    elif query.data == "view_caption":
+        caption = await db.get_user_caption(user_id)
+        if caption:
+            await query.message.edit_text(f"**Caption Template:**\n{caption}")
+        else:
+            await query.answer("No caption template set.", show_alert=True)
+
+    # Ensure buttons are updated after any action
+    await update_settings_buttons(query)
+
+async def update_settings_buttons(query):
+    user_id = query.from_user.id
+
+    # Re-fetch the settings to ensure buttons are updated correctly
+    thumbnail = await db.get_thumbnail(user_id)
+    metadata = await db.get_metadata_titles(user_id)
+    gofile_api_key = await db.get_gofile_api_key(user_id)
+    prefix = await db.get_user_prefix(user_id)
+    caption = await db.get_user_caption(user_id)
+
+    # Create buttons for each setting
+    view_thumbnail_button = InlineKeyboardButton(
+        "View Thumbnail" if thumbnail else "Thumbnail ❌",
+        callback_data="view_thumbnail"
+    )
+    view_metadata_button = InlineKeyboardButton(
+        "View Metadata" if metadata else "Metadata ❌",
+        callback_data="view_metadata"
+    )
+    view_gofile_api_key_button = InlineKeyboardButton(
+        "View GoFile API Key" if gofile_api_key else "GoFile API Key ❌",
+        callback_data="view_gofile_api_key"
+    )
+    view_prefix_button = InlineKeyboardButton(
+        "View Prefix" if prefix else "Prefix ❌",
+        callback_data="view_prefix"
+    )
+    view_caption_button = InlineKeyboardButton(
+        "View Caption" if caption else "Caption ❌",
+        callback_data="view_caption"
+    )
+
+    buttons = [
+        [view_thumbnail_button],
+        [view_metadata_button],
+        [view_gofile_api_key_button],
+        [view_prefix_button],
+        [view_caption_button],
+    ]
+
+    try:
+        await query.message.edit_reply_markup(InlineKeyboardMarkup(buttons))
+    except MessageNotModified:
+        pass
