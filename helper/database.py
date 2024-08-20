@@ -1,4 +1,4 @@
-@@ -2,100 +2,83 @@
+
 from pymongo import ReturnDocument
 from config import DATABASE_NAME, DATABASE_URI
 
