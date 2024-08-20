@@ -76,7 +76,7 @@ async def set_metadata_command(client, msg):
     
     await msg.reply_text("Metadata titles set successfully ✅.")
 
-
+"""
 @Client.on_message(filters.command("uploadsettings") & filters.private)
 async def upload_settings(bot, msg):
     user_id = msg.from_user.id
@@ -142,7 +142,7 @@ async def handle_upload_settings_callback(bot, query):
             # Handle the case where the message content hasn't changed
             pass
 
-
+"""
 
 @Client.on_message(filters.private & filters.command("gdriveid"))
 async def gdrive_id(bot, msg):
