@@ -566,12 +566,12 @@ async def rename_file(bot, msg):
                 
                     upload_result = await gofile_upload(downloaded, new_name, gofile_api_key)
                     if "http" in upload_result:
-                        await sts.edit(f"Upload successful!\nDownload link: {upload_result}")
+                        await msg.reply_text(f"Upload successful!\nDownload link: {upload_result}")
                     else:
-                        await sts.edit(upload_result)
+                        await msg.reply_text(upload_result)
 
                 except Exception as e:
-                    await sts.edit(f"Error: {e}")
+                    await msg.reply_text(f"Error: {e}")
 
                 finally:
                     if os.path.exists(downloaded):
