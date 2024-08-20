@@ -177,24 +177,26 @@ async def gofile_setup(bot, msg):
     await msg.reply_text("Gofile API key has been successfully set.")
 
 
+from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+
 @Client.on_message(filters.private & filters.command("uploaddestinations"))
 async def upload_destinations(bot, msg):
     user_id = msg.from_user.id
+    
     # Fetch current settings
-    user_gdrive_id = await db.get_gdrive_folder_id(user_id)
-    user_gofile_key = await db.get_gofile_api_key(user_id)
+    current_destination = await db.get_user_upload_destination(user_id)
 
     # Define buttons based on current settings
     telegram_button = InlineKeyboardButton(
-        "📦 Upload to Telegram ✅" if await db.get_user_upload_destination(user_id) == "telegram" else "📦 Upload to Telegram ❌",
+        "📦 Upload to Telegram ✅" if current_destination == "telegram" else "📦 Upload to Telegram ❌",
         callback_data="set_upload_telegram"
     )
     gdrive_button = InlineKeyboardButton(
-        "🌐 Upload to Google Drive ✅" if await db.get_user_upload_destination(user_id) == "gdrive" else "🌐 Upload to Google Drive ❌",
+        "🌐 Upload to Google Drive ✅" if current_destination == "gdrive" else "🌐 Upload to Google Drive ❌",
         callback_data="set_upload_gdrive"
     )
     gofile_button = InlineKeyboardButton(
-        "🔗 Upload to Gofile ✅" if await db.get_user_upload_destination(user_id) == "gofile" else "🔗 Upload to Gofile ❌",
+        "🔗 Upload to Gofile ✅" if current_destination == "gofile" else "🔗 Upload to Gofile ❌",
         callback_data="set_upload_gofile"
     )
 
@@ -207,20 +209,28 @@ async def upload_destinations(bot, msg):
         reply_markup=InlineKeyboardMarkup(buttons)
     )
 
-
 @Client.on_callback_query()
 async def handle_callback(bot, query):
     user_id = query.from_user.id
-    if query.data.startswith("set_upload_"):
-        setting = query.data.split("_")[2]
-        await db.set_user_upload_type(user_id, setting)
-        await query.answer(f"Upload type set to {setting.capitalize()}.", show_alert=True)
-    
-    elif query.data.startswith("set_upload_"):
-        destination = query.data.split("_")[2]
-        await db.set_user_upload_destination(user_id, destination)
-        await query.answer(f"Upload destination set to {destination.capitalize()}.", show_alert=True)
+    data = query.data.split("_")
 
-    # Update message with new button states
-    await upload_settings(bot, query.message)  # For updating upload type
-    await upload_destinations(bot, query.message)  # For updating upload destinations
+    if len(data) < 3:
+        return  # Invalid callback data
+
+    action = data[0]
+    setting = data[1]
+    value = data[2]
+
+    if action == "set":
+        if setting == "upload":
+            if value in ["telegram", "gdrive", "gofile"]:
+                await db.set_user_upload_destination(user_id, value)
+                await query.answer(f"Upload destination set to {value.capitalize()}.", show_alert=True)
+        elif setting == "upload_type":
+            if value in ["document", "video"]:
+                await db.set_user_upload_type(user_id, value)
+                await query.answer(f"Upload type set to {value.capitalize()}.", show_alert=True)
+
+        # Update message with new button states
+        await upload_destinations(bot, query.message)  # Update upload destinations
+        await upload_settings(bot, query.message)  # Update upload type
