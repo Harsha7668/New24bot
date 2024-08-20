@@ -173,7 +173,7 @@ async def rename_file(bot, msg):
 
 """
 
-
+"""
 
 @Client.on_message(filters.private & filters.command("rename"))
 async def rename_file(bot, msg):
@@ -356,3 +356,4 @@ async def rename_file(bot, msg):
             await sts.delete()
         else:
             await msg.reply_text("Error: The file is not a video.")
+"""
